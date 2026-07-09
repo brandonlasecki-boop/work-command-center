@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { buildTree, calcDerivedStatus, findNodeInTree } from "@/lib/progress/calculate";
+import {
+  computeRebalancedSiblingWeights,
+  getSiblingWeightBudget,
+} from "@/lib/progress/weights";
 import type { WorkItem, TablesInsert, TablesUpdate, WorkItemStatus } from "@/lib/types/database";
 
 export async function listWorkItemsByProject(projectId: string): Promise<WorkItem[]> {
@@ -32,6 +36,53 @@ export async function getWorkItem(id: string): Promise<WorkItem | null> {
     .single();
   if (error) return null;
   return data;
+}
+
+export async function listSiblingWorkItems(
+  projectId: string,
+  parentId: string | null,
+  excludeId?: string
+): Promise<WorkItem[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("work_items")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("sort_order");
+
+  if (parentId) {
+    query = query.eq("parent_id", parentId);
+  } else {
+    query = query.is("parent_id", null);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const siblings = data ?? [];
+  return excludeId ? siblings.filter((item) => item.id !== excludeId) : siblings;
+}
+
+export async function rebalanceSiblingWeights(
+  projectId: string,
+  parentId: string | null,
+  excludeId: string | null,
+  requestedWeight: number
+): Promise<number> {
+  const parent = parentId ? await getWorkItem(parentId) : null;
+  const budget = getSiblingWeightBudget(parent);
+  const siblings = await listSiblingWorkItems(projectId, parentId, excludeId ?? undefined);
+  const { weight, siblingUpdates } = computeRebalancedSiblingWeights(
+    siblings.map((item) => ({ id: item.id, weight: Number(item.weight) })),
+    requestedWeight,
+    budget
+  );
+
+  for (const [id, siblingWeight] of siblingUpdates) {
+    await updateWorkItem(id, { weight: siblingWeight });
+  }
+
+  return weight;
 }
 
 export async function createWorkItem(input: TablesInsert<"work_items">): Promise<WorkItem> {
@@ -117,31 +168,41 @@ export async function syncParentStatuses(
   await syncAncestorStatuses(projectId, item?.parent_id ?? null);
 }
 
+export async function reorderWorkItemToIndex(id: string, newIndex: number): Promise<void> {
+  const item = await getWorkItem(id);
+  if (!item) return;
+
+  const siblings = await listSiblingWorkItems(item.project_id, item.parent_id);
+  const oldIndex = siblings.findIndex((s) => s.id === id);
+  if (
+    oldIndex === -1 ||
+    oldIndex === newIndex ||
+    newIndex < 0 ||
+    newIndex >= siblings.length
+  ) {
+    return;
+  }
+
+  const reordered = [...siblings];
+  const [moved] = reordered.splice(oldIndex, 1);
+  reordered.splice(newIndex, 0, moved);
+
+  const supabase = await createClient();
+  await Promise.all(
+    reordered.map((sibling, index) =>
+      supabase.from("work_items").update({ sort_order: index }).eq("id", sibling.id)
+    )
+  );
+}
+
 export async function reorderWorkItem(id: string, direction: "up" | "down"): Promise<void> {
   const item = await getWorkItem(id);
   if (!item) return;
 
-  const supabase = await createClient();
-  let siblingQuery = supabase
-    .from("work_items")
-    .select("*")
-    .eq("project_id", item.project_id)
-    .order("sort_order");
-
-  if (item.parent_id) {
-    siblingQuery = siblingQuery.eq("parent_id", item.parent_id);
-  } else {
-    siblingQuery = siblingQuery.is("parent_id", null);
-  }
-
-  const { data: siblings } = await siblingQuery;
-
-  if (!siblings) return;
+  const siblings = await listSiblingWorkItems(item.project_id, item.parent_id);
   const idx = siblings.findIndex((s) => s.id === id);
   const swapIdx = direction === "up" ? idx - 1 : idx + 1;
   if (swapIdx < 0 || swapIdx >= siblings.length) return;
 
-  const other = siblings[swapIdx];
-  await supabase.from("work_items").update({ sort_order: other.sort_order }).eq("id", id);
-  await supabase.from("work_items").update({ sort_order: item.sort_order }).eq("id", other.id);
+  await reorderWorkItemToIndex(id, swapIdx);
 }

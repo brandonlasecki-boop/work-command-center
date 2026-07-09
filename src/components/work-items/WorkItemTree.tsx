@@ -2,6 +2,20 @@
 
 import { useState } from "react";
 import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   ChevronDown,
   ChevronRight,
   Plus,
@@ -15,6 +29,7 @@ import {
   GitBranch,
   ListTodo,
   Check,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -41,6 +56,7 @@ import {
   toggleWorkItemAction,
   deleteWorkItemAction,
   reorderWorkItemAction,
+  reorderWorkItemToIndexAction,
 } from "@/app/actions/work-items";
 import { fireConfetti } from "@/components/ui/confetti-burst";
 import { buildTree } from "@/lib/progress/calculate";
@@ -159,6 +175,33 @@ export function WorkItemTree({
   const tree = buildTree(items);
   const filteredTree = filterTree(tree, activeFilters);
   const hasActiveFilters = activeFilters.size > 0;
+  const dragDisabled = readOnly || hasActiveFilters;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    })
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeItem = items.find((item) => item.id === active.id);
+    const overItem = items.find((item) => item.id === over.id);
+    if (!activeItem || !overItem) return;
+    if (activeItem.parent_id !== overItem.parent_id) return;
+
+    const siblings = items
+      .filter((item) => item.parent_id === activeItem.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+
+    const oldIndex = siblings.findIndex((item) => item.id === active.id);
+    const newIndex = siblings.findIndex((item) => item.id === over.id);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+
+    await reorderWorkItemToIndexAction(String(active.id), projectId, newIndex);
+  }
 
   function toggleFilter(status: WorkItemStatus) {
     setActiveFilters((prev) => {
@@ -260,17 +303,30 @@ export function WorkItemTree({
             </Button>
           </div>
         ) : (
-          filteredTree.map((node) => (
-            <WorkItemRow
-              key={node.id}
-              node={node}
-              projectId={projectId}
-              depth={0}
-              forceExpanded={hasActiveFilters}
-              attachmentsByWorkItem={attachmentsByWorkItem}
-              readOnly={readOnly}
-            />
-          ))
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredTree.map((node) => node.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {filteredTree.map((node) => (
+                <SortableWorkItemRow
+                  key={node.id}
+                  node={node}
+                  projectId={projectId}
+                  depth={0}
+                  forceExpanded={hasActiveFilters}
+                  attachmentsByWorkItem={attachmentsByWorkItem}
+                  readOnly={readOnly}
+                  dragDisabled={dragDisabled}
+                  items={items}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
 
         {hasActiveFilters && filteredTree.length > 0 && (
@@ -283,13 +339,15 @@ export function WorkItemTree({
   );
 }
 
-function WorkItemRow({
+function SortableWorkItemRow({
   node,
   projectId,
   depth,
   forceExpanded = false,
   attachmentsByWorkItem,
   readOnly = false,
+  dragDisabled = false,
+  items,
 }: {
   node: WorkItemNode;
   projectId: string;
@@ -297,6 +355,64 @@ function WorkItemRow({
   forceExpanded?: boolean;
   attachmentsByWorkItem: Map<string, WorkItemAttachmentWithUrl[]>;
   readOnly?: boolean;
+  dragDisabled?: boolean;
+  items: WorkItem[];
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id, disabled: dragDisabled });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(isDragging && "relative z-10 opacity-60")}>
+      <WorkItemRow
+        node={node}
+        projectId={projectId}
+        depth={depth}
+        forceExpanded={forceExpanded}
+        attachmentsByWorkItem={attachmentsByWorkItem}
+        readOnly={readOnly}
+        dragDisabled={dragDisabled}
+        items={items}
+        dragHandleRef={setActivatorNodeRef}
+        dragHandleProps={dragDisabled ? undefined : { ...attributes, ...listeners }}
+      />
+    </div>
+  );
+}
+
+function WorkItemRow({
+  node,
+  projectId,
+  depth,
+  forceExpanded = false,
+  attachmentsByWorkItem,
+  readOnly = false,
+  dragDisabled = false,
+  items,
+  dragHandleRef,
+  dragHandleProps,
+}: {
+  node: WorkItemNode;
+  projectId: string;
+  depth: number;
+  forceExpanded?: boolean;
+  attachmentsByWorkItem: Map<string, WorkItemAttachmentWithUrl[]>;
+  readOnly?: boolean;
+  dragDisabled?: boolean;
+  items: WorkItem[];
+  dragHandleRef?: (element: HTMLElement | null) => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }) {
   const [expanded, setExpanded] = useState(true);
   const isExpanded = forceExpanded || expanded;
@@ -317,6 +433,20 @@ function WorkItemRow({
         )}
         style={{ paddingLeft: `${depth * 24 + 12}px` }}
       >
+        {!readOnly && !dragDisabled && dragHandleProps ? (
+          <button
+            type="button"
+            ref={dragHandleRef}
+            className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+            aria-label="Drag to reorder"
+            {...dragHandleProps}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        ) : (
+          <span className="inline-block w-4 shrink-0" />
+        )}
+
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
@@ -428,17 +558,26 @@ function WorkItemRow({
         )}
       </div>
       {isExpanded &&
-        node.children.map((child) => (
-          <WorkItemRow
-            key={child.id}
-            node={child}
-            projectId={projectId}
-            depth={depth + 1}
-            forceExpanded={forceExpanded}
-            attachmentsByWorkItem={attachmentsByWorkItem}
-            readOnly={readOnly}
-          />
-        ))}
+        (node.children.length > 0 ? (
+          <SortableContext
+            items={node.children.map((child) => child.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {node.children.map((child) => (
+              <SortableWorkItemRow
+                key={child.id}
+                node={child}
+                projectId={projectId}
+                depth={depth + 1}
+                forceExpanded={forceExpanded}
+                attachmentsByWorkItem={attachmentsByWorkItem}
+                readOnly={readOnly}
+                dragDisabled={dragDisabled}
+                items={items}
+              />
+            ))}
+          </SortableContext>
+        ) : null)}
     </div>
   );
 }

@@ -34,7 +34,13 @@ export async function createWorkItemAction(formData: FormData) {
     status: formData.get("status") || "not_started",
     weight: formData.get("weight") || 1,
   });
-  const created = await workItems.createWorkItem(parsed);
+  const weight = await workItems.rebalanceSiblingWeights(
+    parsed.project_id,
+    parsed.parent_id ?? null,
+    null,
+    parsed.weight
+  );
+  const created = await workItems.createWorkItem({ ...parsed, weight });
   if (created.parent_id) {
     await workItems.syncParentStatuses(parsed.project_id, created.id);
   }
@@ -55,7 +61,13 @@ export async function updateWorkItemAction(id: string, formData: FormData) {
     status: formData.get("status") || "not_started",
     weight: formData.get("weight") || 1,
   });
-  await workItems.updateWorkItem(id, parsed);
+  const weight = await workItems.rebalanceSiblingWeights(
+    parsed.project_id,
+    parsed.parent_id ?? null,
+    id,
+    parsed.weight
+  );
+  await workItems.updateWorkItem(id, { ...parsed, weight });
   await workItems.syncParentStatuses(parsed.project_id, id);
   revalidatePath(`/project/${parsed.project_id}`);
   revalidatePath("/dashboard");
@@ -97,6 +109,15 @@ export async function deleteWorkItemAction(id: string, projectId: string) {
 
 export async function reorderWorkItemAction(id: string, projectId: string, direction: "up" | "down") {
   await workItems.reorderWorkItem(id, direction);
+  revalidatePath(`/project/${projectId}`);
+}
+
+export async function reorderWorkItemToIndexAction(
+  id: string,
+  projectId: string,
+  newIndex: number
+) {
+  await workItems.reorderWorkItemToIndex(id, newIndex);
   revalidatePath(`/project/${projectId}`);
 }
 
