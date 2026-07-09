@@ -161,7 +161,7 @@
   }
 
   .animate-marquee-slow {
-    animation: marquee 90s linear infinite;
+    animation: marquee 120s linear infinite;
     will-change: transform;
   }
 
