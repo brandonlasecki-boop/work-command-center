@@ -1,6 +1,6 @@
 import { listCompanies } from "@/lib/data/companies";
 import { listProjects } from "@/lib/data/projects";
-import { listDailyLogs } from "@/lib/data/daily-logs";
+import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
 import { DailyLogForm } from "@/components/daily-log/DailyLogForm";
 import { DailyLogFilters } from "@/components/daily-log/DailyLogFilters";
@@ -14,7 +14,7 @@ export default async function DailyLogPage({
   const [companies, projects, logs] = await Promise.all([
     listCompanies(),
     listProjects(),
-    listDailyLogs({
+    listDailyLogsEnriched({
       companyId: params.company,
       projectId: params.project,
       fromDate: params.from,

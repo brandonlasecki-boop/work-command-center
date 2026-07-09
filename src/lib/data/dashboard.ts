@@ -1,7 +1,7 @@
 import { listCompanies } from "@/lib/data/companies";
 import { listProjects } from "@/lib/data/projects";
 import { listAllWorkItems } from "@/lib/data/work-items";
-import { listTodayLogs, listDailyLogs } from "@/lib/data/daily-logs";
+import { listTodayLogs, listDailyLogs, enrichDailyLogs } from "@/lib/data/daily-logs";
 import {
   enrichCompaniesWithProgress,
   enrichProjectsWithProgress,
@@ -49,7 +49,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     .filter((w) => w.project.priority === "urgent" || w.project.priority === "high")
     .slice(0, 8);
 
-  const recentWins = await listDailyLogs({});
+  const recentWinsRaw = await listDailyLogs({});
+  const recentWins = await enrichDailyLogs(recentWinsRaw.slice(0, 10));
 
   const today = new Date().toISOString().split("T")[0];
   const tasksCompletedToday = workItems.filter(
@@ -75,7 +76,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     activeProjects,
     todayLogs,
     focusItems,
-    recentWins: recentWins.slice(0, 10),
+    recentWins,
     todayStats: {
       tasksCompleted: tasksCompletedToday,
       workLogs: todayLogs.length,

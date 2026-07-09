@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getProject } from "@/lib/data/projects";
 import { getCompany } from "@/lib/data/companies";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
-import { listDailyLogs } from "@/lib/data/daily-logs";
+import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { calcProjectProgress, buildTree } from "@/lib/progress/calculate";
 import { WorkItemTree } from "@/components/work-items/WorkItemTree";
 import { PhaseBreakdown } from "@/components/projects/PhaseBreakdown";
@@ -33,7 +33,7 @@ export default async function ProjectPage({
   const phases = buildTree(workItems).filter((n) => n.type === "phase");
   const taskCount = workItems.filter((w) => w.type === "task").length;
   const completedTasks = workItems.filter((w) => w.type === "task" && w.status === "completed").length;
-  const recentLogs = await listDailyLogs({ projectId: id });
+  const recentLogs = await listDailyLogsEnriched({ projectId: id });
   const projectAttachments = await listProjectAttachmentsWithTasks(id);
   const attachmentsByWorkItem = groupAttachmentsByWorkItem(projectAttachments);
 

@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getCompany } from "@/lib/data/companies";
 import { listProjectsByCompany } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
-import { listDailyLogs } from "@/lib/data/daily-logs";
+import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { enrichProjectsWithProgress, calcCompanyProgress } from "@/lib/progress/calculate";
 import { ProjectCard, ProjectFormDialog } from "@/components/projects/ProjectCard";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
@@ -30,7 +30,7 @@ export default async function CompanyPage({
   }
   const projectsWithProgress = enrichProjectsWithProgress(projects, workItemsByProject);
   const progress = calcCompanyProgress(projectsWithProgress);
-  const recentLogs = await listDailyLogs({ companyId: id });
+  const recentLogs = await listDailyLogsEnriched({ companyId: id });
 
   return (
     <div

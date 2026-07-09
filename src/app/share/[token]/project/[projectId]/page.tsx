@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getProject } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
-import { listDailyLogs } from "@/lib/data/daily-logs";
+import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { listProjectAttachmentsWithTasks, groupAttachmentsByWorkItem } from "@/lib/data/attachments";
 import { calcProjectProgress, buildTree } from "@/lib/progress/calculate";
 import { requireShareAccess } from "@/lib/shares/access";
@@ -35,7 +35,7 @@ export default async function ShareProjectPage({
   const phases = buildTree(workItems).filter((n) => n.type === "phase");
   const taskCount = workItems.filter((w) => w.type === "task").length;
   const completedTasks = workItems.filter((w) => w.type === "task" && w.status === "completed").length;
-  const recentLogs = await listDailyLogs({ projectId });
+  const recentLogs = await listDailyLogsEnriched({ projectId });
   const projectAttachments = await listProjectAttachmentsWithTasks(projectId);
   const attachmentsByWorkItem = groupAttachmentsByWorkItem(projectAttachments);
 

@@ -1,6 +1,6 @@
 import { listProjectsByCompany } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
-import { listDailyLogs } from "@/lib/data/daily-logs";
+import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { enrichProjectsWithProgress, calcCompanyProgress } from "@/lib/progress/calculate";
 import { requireShareAccess } from "@/lib/shares/access";
 import { ShareViewBanner } from "@/components/share/ShareViewBanner";
@@ -25,7 +25,7 @@ export default async function ShareCompanyPage({
   }
   const projectsWithProgress = enrichProjectsWithProgress(projects, workItemsByProject);
   const progress = calcCompanyProgress(projectsWithProgress);
-  const recentLogs = await listDailyLogs({ companyId: company.id });
+  const recentLogs = await listDailyLogsEnriched({ companyId: company.id });
 
   return (
     <div

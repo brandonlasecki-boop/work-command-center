@@ -48,6 +48,22 @@ export async function listAttachmentsByProject(
   return attachSignedUrls(data ?? []);
 }
 
+export async function listAttachmentsByWorkItemIds(
+  workItemIds: string[]
+): Promise<WorkItemAttachmentWithUrl[]> {
+  if (workItemIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("work_item_attachments")
+    .select("*")
+    .in("work_item_id", workItemIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return attachSignedUrls(data ?? []);
+}
+
 export async function listAttachmentsByWorkItem(
   workItemId: string
 ): Promise<WorkItemAttachmentWithUrl[]> {

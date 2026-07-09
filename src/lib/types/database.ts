@@ -390,6 +390,11 @@ export type DailyLogWithRelations = DailyLog & {
   project?: Project | null
 }
 
+export type DailyLogEnriched = DailyLogWithRelations & {
+  work_item?: Pick<WorkItem, "id" | "title" | "description" | "project_id"> | null
+  attachments: WorkItemAttachmentWithUrl[]
+}
+
 export type DashboardTodayStats = {
   tasksCompleted: number
   workLogs: number
@@ -402,6 +407,6 @@ export type DashboardSummary = {
   activeProjects: ProjectWithProgress[]
   todayLogs: DailyLogWithRelations[]
   focusItems: (WorkItem & { project: Project; company: Company })[]
-  recentWins: DailyLogWithRelations[]
+  recentWins: DailyLogEnriched[]
   todayStats: DashboardTodayStats
 }

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import type { DailyLog, DailyLogWithRelations, TablesInsert } from "@/lib/types/database";
+import type { DailyLog, DailyLogEnriched, DailyLogWithRelations, TablesInsert, WorkItem } from "@/lib/types/database";
+import { listAttachmentsByWorkItemIds, groupAttachmentsByWorkItem } from "@/lib/data/attachments";
 
 export type DailyLogFilters = {
   companyId?: string;
@@ -7,6 +8,36 @@ export type DailyLogFilters = {
   fromDate?: string;
   toDate?: string;
 };
+
+export async function enrichDailyLogs(logs: DailyLogWithRelations[]): Promise<DailyLogEnriched[]> {
+  const workItemIds = logs
+    .map((log) => log.work_item_id)
+    .filter((id): id is string => Boolean(id));
+
+  if (workItemIds.length === 0) {
+    return logs.map((log) => ({ ...log, attachments: [] }));
+  }
+
+  const supabase = await createClient();
+  const { data: workItems, error } = await supabase
+    .from("work_items")
+    .select("id, title, description, project_id")
+    .in("id", workItemIds);
+
+  if (error) throw error;
+
+  const workItemMap = new Map(
+    (workItems ?? []).map((item) => [item.id, item as Pick<WorkItem, "id" | "title" | "description" | "project_id">])
+  );
+  const attachments = await listAttachmentsByWorkItemIds(workItemIds);
+  const attachmentsByWorkItem = groupAttachmentsByWorkItem(attachments);
+
+  return logs.map((log) => ({
+    ...log,
+    work_item: log.work_item_id ? workItemMap.get(log.work_item_id) ?? null : null,
+    attachments: log.work_item_id ? attachmentsByWorkItem.get(log.work_item_id) ?? [] : [],
+  }));
+}
 
 export async function listDailyLogs(filters: DailyLogFilters = {}): Promise<DailyLogWithRelations[]> {
   const supabase = await createClient();
@@ -24,6 +55,13 @@ export async function listDailyLogs(filters: DailyLogFilters = {}): Promise<Dail
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []) as DailyLogWithRelations[];
+}
+
+export async function listDailyLogsEnriched(
+  filters: DailyLogFilters = {}
+): Promise<DailyLogEnriched[]> {
+  const logs = await listDailyLogs(filters);
+  return enrichDailyLogs(logs);
 }
 
 export async function listTodayLogs(): Promise<DailyLogWithRelations[]> {
