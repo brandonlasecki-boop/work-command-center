@@ -13,6 +13,7 @@ import {
   useCanvasScale,
   TvProgressBar,
   SectionTitle,
+  TvTicker,
 } from "@/components/tv/tv-ui";
 import type { DashboardSummary } from "@/lib/types/database";
 
@@ -44,10 +45,23 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [router]);
 
-  const tickerItems =
+  const winsTickerItems =
     data.todayLogs.length > 0
-      ? [...data.todayLogs, ...data.todayLogs]
-      : [{ id: "empty", title: "No wins logged today yet — go get one!", company: null }];
+      ? data.todayLogs.map((log) => ({
+          id: log.id,
+          title: log.title,
+          subtitle: log.company?.name ?? null,
+        }))
+      : [{ id: "empty", title: "No wins logged today yet — go get one!", subtitle: null }];
+
+  const focusTickerItems =
+    data.focusItems.length > 0
+      ? data.focusItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          subtitle: `${item.project.name} · ${item.company.name}`,
+        }))
+      : [{ id: "empty", title: "All clear — no urgent focus items", subtitle: null }];
 
   const companies = data.companies.slice(0, 4);
   const projects = data.activeProjects.slice(0, 4);
@@ -100,31 +114,11 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
               </div>
             </header>
 
-            {/* Ticker */}
-            <div className="relative z-10 mb-5 flex h-[42px] shrink-0 items-center overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-              <span className="shrink-0 border-r border-emerald-500/20 px-4 text-[12px] font-bold uppercase tracking-widest text-emerald-400">
-                Live
-              </span>
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <div className="animate-marquee inline-flex w-max whitespace-nowrap">
-                  {tickerItems.map((log, i) => (
-                    <span
-                      key={`${log.id}-${i}`}
-                      className="mx-6 inline-flex items-center gap-2 text-[17px] text-slate-300"
-                    >
-                      <span className="text-emerald-400">✓</span>
-                      {log.title}
-                      {"company" in log && log.company && (
-                        <span className="text-slate-500">· {log.company.name}</span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {/* Wins newsfeed */}
+            <TvTicker label="Live" items={winsTickerItems} variant="live" />
 
             {/* Main grid — 3 balanced columns */}
-            <div className="relative z-10 grid min-h-0 flex-1 grid-cols-3 gap-5">
+            <div className="relative z-10 my-5 grid min-h-0 flex-1 grid-cols-3 gap-5">
               {/* Companies */}
               <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-white/8 bg-black/20 p-4">
                 <SectionTitle>Companies</SectionTitle>
@@ -256,6 +250,9 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
                 </div>
               </section>
             </div>
+
+            {/* Focus newsfeed */}
+            <TvTicker label="Focus" items={focusTickerItems} variant="focus" />
           </div>
         </div>
       </div>

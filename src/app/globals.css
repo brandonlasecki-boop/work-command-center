@@ -160,6 +160,11 @@
     will-change: transform;
   }
 
+  .animate-marquee-slow {
+    animation: marquee 90s linear infinite;
+    will-change: transform;
+  }
+
   .marquee-mask {
     overflow: hidden;
     max-width: 100%;
