@@ -213,6 +213,21 @@
   100% { transform: translateX(-50%); }
 }
 
+@keyframes tv-banner-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tv-win-banner-card {
+  animation: tv-banner-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

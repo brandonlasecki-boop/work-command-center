@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { CheckCircle2 } from "lucide-react";
+import { initTvConfetti } from "@/components/ui/confetti-burst";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { MonitorOff, Sparkles } from "lucide-react";
+import { MonitorOff } from "lucide-react";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,43 +18,45 @@ import {
   SectionTitle,
   TvTicker,
 } from "@/components/tv/tv-ui";
-import { useTvTaskCompletionCelebration } from "@/hooks/useTvTaskCompletionCelebration";
+import { useTvCelebration } from "@/hooks/useTvCelebration";
 import type { DashboardSummary } from "@/lib/types/database";
 
 function TvCompletionBanner({ title }: { title: string }) {
-  return (
-    <div className="pointer-events-none absolute inset-x-0 top-6 z-30 flex justify-center px-8 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="flex max-w-3xl items-center gap-4 rounded-2xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/25 via-cyan-500/20 to-violet-500/25 px-8 py-4 shadow-[0_0_60px_rgba(16,185,129,0.35)] backdrop-blur-md">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300 ring-2 ring-emerald-300/40">
-          <Sparkles className="h-6 w-6" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[13px] font-bold uppercase tracking-[0.28em] text-emerald-300">
-            Task Completed
-          </p>
-          <p className="truncate text-[28px] font-bold leading-tight text-white">{title}</p>
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="pointer-events-none fixed inset-0 z-[100001] flex items-center justify-center px-10">
+      <div className="tv-win-banner-card w-full max-w-4xl rounded-3xl border-2 border-emerald-300/50 bg-[#0a1628]/95 px-10 py-8 text-center shadow-[0_0_80px_rgba(16,185,129,0.45)]">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/20 ring-4 ring-emerald-300/30">
+          <CheckCircle2 className="h-9 w-9 text-emerald-300" />
         </div>
+        <p className="text-sm font-bold uppercase tracking-[0.35em] text-emerald-300">
+          Task Completed
+        </p>
+        <p className="mt-3 text-balance text-3xl font-bold leading-tight text-white sm:text-4xl">
+          {title}
+        </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 export function TvModeClient({ data }: { data: DashboardSummary }) {
   const router = useRouter();
   const scale = useCanvasScale();
-  const [celebration, setCelebration] = useState<{ id: string; title: string } | null>(null);
-
-  const handleTaskCompleted = useCallback((task: { id: string; title: string }) => {
-    setCelebration(task);
-  }, []);
-
-  useTvTaskCompletionCelebration(handleTaskCompleted);
+  const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
+  const { celebration, liveConnected } = useTvCelebration(data);
 
   useEffect(() => {
-    if (!celebration) return;
-    const timeout = window.setTimeout(() => setCelebration(null), 6000);
-    return () => window.clearTimeout(timeout);
-  }, [celebration]);
+    initTvConfetti(confettiCanvasRef.current);
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.overflow = "hidden";
@@ -65,7 +70,7 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => router.refresh(), 30000);
+    const interval = setInterval(() => router.refresh(), 8000);
     return () => clearInterval(interval);
   }, [router]);
 
@@ -102,6 +107,12 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#07080f]">
+      <canvas
+        ref={confettiCanvasRef}
+        className="pointer-events-none fixed inset-0 z-[99990]"
+        aria-hidden
+      />
+      {celebration && <TvCompletionBanner title={celebration.title} />}
       <div className="flex h-full w-full items-center justify-center">
         <div
           style={{
@@ -113,7 +124,6 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
           }}
         >
           <div className="tv-canvas relative flex h-full w-full flex-col overflow-hidden bg-gradient-to-br from-[#0c0e1a] via-[#0f1225] to-[#12102a] p-8">
-            {celebration && <TvCompletionBanner title={celebration.title} />}
             {/* Ambient glow */}
             <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl" />
@@ -129,6 +139,15 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
                 </span>
               </div>
               <div className="flex items-center gap-5">
+                <div
+                  className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] uppercase tracking-wider text-slate-400"
+                  title={liveConnected ? "Live updates connected" : "Connecting to live updates..."}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${liveConnected ? "animate-pulse bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-amber-400"}`}
+                  />
+                  {liveConnected ? "Live" : "Connecting"}
+                </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-2 text-right">
                   <p className="text-[32px] font-bold leading-none tabular-nums text-white">
                     {data.todayLogs.length}
@@ -191,7 +210,7 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
                 </div>
               </section>
 
-              {/* Active Projects — stacked rows, not empty 2x2 */}
+              {/* Active Projects */}
               <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-white/8 bg-black/20 p-4">
                 <SectionTitle>Active Projects</SectionTitle>
                 <div className="flex min-h-0 flex-1 flex-col gap-3">
