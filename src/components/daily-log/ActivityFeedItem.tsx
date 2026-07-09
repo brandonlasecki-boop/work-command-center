@@ -12,7 +12,7 @@ export function ActivityFeedItem({ log }: { log: DailyLogEnriched }) {
   const projectId = log.project_id ?? log.work_item?.project_id;
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5">
+    <div className="flex flex-col gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5 sm:flex-row sm:items-start sm:gap-3">
       {log.work_item_id ? (
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
       ) : (
@@ -61,7 +61,7 @@ export function ActivityFeedItem({ log }: { log: DailyLogEnriched }) {
           )}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1 sm:ml-auto">
         <WorkItemNoteIndicator note={note} />
         <WorkItemAttachmentIndicator attachments={log.attachments} />
       </div>

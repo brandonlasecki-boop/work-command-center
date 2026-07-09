@@ -34,7 +34,7 @@ export function DailyLogForm({
   if (companies.length === 0) return null;
 
   return (
-    <GlassCard className="p-6">
+    <GlassCard className="p-4 sm:p-6">
       <h3 className="mb-4 font-semibold">Log Completed Work</h3>
       <form action={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

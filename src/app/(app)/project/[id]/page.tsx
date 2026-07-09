@@ -7,8 +7,9 @@ import { listWorkItemsByProject } from "@/lib/data/work-items";
 import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { listProjectDocuments } from "@/lib/data/project-documents";
 import { calcProjectProgress, buildTree } from "@/lib/progress/calculate";
-import { WorkItemTree } from "@/components/work-items/WorkItemTree";
-import { PhaseBreakdown } from "@/components/projects/PhaseBreakdown";
+import { ProjectPhaseFilterProvider } from "@/components/projects/ProjectPhaseFilter";
+import { ProjectPhaseBreakdownSection } from "@/components/projects/ProjectPhaseBreakdownSection";
+import { ProjectWorkItemsSection } from "@/components/projects/ProjectWorkItemsSection";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { EditProjectButton, DeleteProjectButton } from "@/components/projects/ProjectCard";
@@ -43,7 +44,8 @@ export default async function ProjectPage({
   const attachmentsByWorkItem = groupAttachmentsByWorkItem(projectAttachments);
 
   return (
-    <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
+    <ProjectPhaseFilterProvider>
+      <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <Link href={`/company/${project.company_id}`}>
@@ -87,30 +89,22 @@ export default async function ProjectPage({
       </div>
 
       {phases.length > 0 && (
-        <section>
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Phase Breakdown</h2>
-              <p className="text-sm text-muted-foreground">
-                {completedTasks}/{taskCount} tasks complete · weighted progress
-              </p>
-            </div>
-            <p className="text-3xl font-bold tabular-nums gradient-text">{progress}%</p>
-          </div>
-          <PhaseBreakdown items={workItems} accentColor={company?.color} />
-        </section>
+        <ProjectPhaseBreakdownSection
+          items={workItems}
+          accentColor={company?.color}
+          completedTasks={completedTasks}
+          taskCount={taskCount}
+          progress={progress}
+        />
       )}
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-12 xl:gap-8">
         <div className="min-w-0 space-y-6 xl:col-span-8">
-          <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
-            <h2 className="mb-4 text-lg font-semibold">Work Items</h2>
-            <WorkItemTree
-              items={workItems}
-              projectId={id}
-              attachmentsByWorkItem={attachmentsByWorkItem}
-            />
-          </GlassCard>
+          <ProjectWorkItemsSection
+            items={workItems}
+            projectId={id}
+            attachmentsByWorkItem={attachmentsByWorkItem}
+          />
 
           <ProjectDocumentsPanel projectId={id} documents={projectDocuments} />
 
@@ -124,5 +118,6 @@ export default async function ProjectPage({
         </div>
       </div>
     </div>
+    </ProjectPhaseFilterProvider>
   );
 }

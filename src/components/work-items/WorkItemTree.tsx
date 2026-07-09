@@ -121,7 +121,29 @@ const filterButtonStyles: Record<
     active:
       "border-violet-400 bg-violet-500/50 text-white font-semibold ring-2 ring-violet-400/60 shadow-[0_0_20px_rgba(139,92,246,0.4)]",
   },
+  waiting_on_vendor: {
+    inactive: "border-white/10 bg-white/5 text-muted-foreground hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-200",
+    active:
+      "border-cyan-400 bg-cyan-500/50 text-white font-semibold ring-2 ring-cyan-400/60 shadow-[0_0_20px_rgba(6,182,212,0.4)]",
+  },
+  waiting_on_internal_owner: {
+    inactive: "border-white/10 bg-white/5 text-muted-foreground hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:text-indigo-200",
+    active:
+      "border-indigo-400 bg-indigo-500/50 text-white font-semibold ring-2 ring-indigo-400/60 shadow-[0_0_20px_rgba(99,102,241,0.4)]",
+  },
 };
+
+const WAITING_STATUSES: WorkItemStatus[] = [
+  "waiting_on_approval",
+  "waiting_on_vendor",
+  "waiting_on_internal_owner",
+  "waiting_on_carrier",
+  "waiting_on_spruce",
+];
+
+function isWaitingStatus(status: WorkItemStatus): boolean {
+  return WAITING_STATUSES.includes(status);
+}
 
 function filterTree(
   nodes: WorkItemNode[],
@@ -165,17 +187,23 @@ export function WorkItemTree({
   projectId,
   attachmentsByWorkItem,
   readOnly = false,
+  phaseFilterId = null,
 }: {
   items: WorkItem[];
   projectId: string;
   attachmentsByWorkItem: Map<string, WorkItemAttachmentWithUrl[]>;
   readOnly?: boolean;
+  phaseFilterId?: string | null;
 }) {
   const [activeFilters, setActiveFilters] = useState<Set<WorkItemStatus>>(new Set());
   const tree = buildTree(items);
-  const filteredTree = filterTree(tree, activeFilters);
+  const phaseFilteredTree = phaseFilterId
+    ? tree.filter((node) => node.id === phaseFilterId)
+    : tree;
+  const filteredTree = filterTree(phaseFilteredTree, activeFilters);
   const hasActiveFilters = activeFilters.size > 0;
   const dragDisabled = readOnly || hasActiveFilters;
+  const expandAll = hasActiveFilters || Boolean(phaseFilterId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -234,6 +262,14 @@ export function WorkItemTree({
     );
   }
 
+  if (phaseFilterId && phaseFilteredTree.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center">
+        <p className="text-muted-foreground">No work items found for this phase.</p>
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider delay={150}>
       <div className="space-y-1">
@@ -276,7 +312,7 @@ export function WorkItemTree({
               </Button>
             )}
           </div>
-          {!readOnly && (
+          {!readOnly && !phaseFilterId && (
             <WorkItemFormDialog
               projectId={projectId}
               parentId={null}
@@ -318,7 +354,7 @@ export function WorkItemTree({
                   node={node}
                   projectId={projectId}
                   depth={0}
-                  forceExpanded={hasActiveFilters}
+                  forceExpanded={expandAll}
                   attachmentsByWorkItem={attachmentsByWorkItem}
                   readOnly={readOnly}
                   dragDisabled={dragDisabled}
@@ -429,133 +465,142 @@ function WorkItemRow({
     <div>
       <div
         className={cn(
-          "group flex min-w-0 items-center gap-2 rounded-xl border border-transparent px-3 py-2 transition-colors hover:border-white/10 hover:bg-white/5",
+          "group flex min-w-0 flex-col gap-1.5 rounded-xl border border-transparent py-2 pr-3 pl-[calc(var(--depth)*12px+8px)] transition-colors sm:flex-row sm:items-center sm:gap-2 sm:pl-[calc(var(--depth)*24px+12px)] hover:border-white/10 hover:bg-white/5",
+          node.type === "task" && isWaitingStatus(node.status) &&
+            "border-amber-500/30 bg-amber-500/5",
+          node.type === "task" && node.status === "blocked" &&
+            "border-red-500/30 bg-red-500/5",
         )}
-        style={{ paddingLeft: `${depth * 24 + 12}px` }}
+        style={{ "--depth": depth } as React.CSSProperties}
       >
-        {!readOnly && !dragDisabled && dragHandleProps ? (
+        <div className="flex min-w-0 items-center gap-2 sm:contents">
+          {!readOnly && !dragDisabled && dragHandleProps ? (
+            <button
+              type="button"
+              ref={dragHandleRef}
+              className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+              aria-label="Drag to reorder"
+              {...dragHandleProps}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          ) : (
+            <span className="inline-block w-4 shrink-0" />
+          )}
+
           <button
             type="button"
-            ref={dragHandleRef}
-            className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
-            aria-label="Drag to reorder"
-            {...dragHandleProps}
+            onClick={() => setExpanded(!expanded)}
+            className="text-muted-foreground"
           >
-            <GripVertical className="h-4 w-4" />
+            {node.children.length > 0 ? (
+              isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+            ) : (
+              <span className="inline-block w-4" />
+            )}
           </button>
-        ) : (
-          <span className="inline-block w-4 shrink-0" />
-        )}
 
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="text-muted-foreground"
-        >
-          {node.children.length > 0 ? (
-            isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+          {readOnly ? (
+            <span className="shrink-0">
+              {node.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground" />
+              )}
+            </span>
           ) : (
-            <span className="inline-block w-4" />
+            <button type="button" onClick={handleToggle} className="shrink-0">
+              {node.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-400" />
+              )}
+            </button>
           )}
-        </button>
 
-        {readOnly ? (
-          <span className="shrink-0">
-            {node.status === "completed" ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-            ) : (
-              <Circle className="h-5 w-5 text-muted-foreground" />
-            )}
+          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className={cn("min-w-0 flex-1 truncate text-sm", node.status === "completed" && "text-muted-foreground line-through")}>
+            {node.title}
           </span>
-        ) : (
-          <button type="button" onClick={handleToggle} className="shrink-0">
-            {node.status === "completed" ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-            ) : (
-              <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-400" />
-            )}
-          </button>
-        )}
+        </div>
 
-        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className={cn("min-w-0 flex-1 truncate text-sm", node.status === "completed" && "text-muted-foreground line-through")}>
-          {node.title}
-        </span>
-        <WorkItemNoteIndicator note={node.description ?? ""} />
-        <WorkItemAttachmentIndicator attachments={attachments} />
-        <WeightBadge weight={Number(node.weight)} />
-        {node.children.length > 0 && (
-          <span className="hidden text-xs tabular-nums text-muted-foreground md:inline">
-            {node.progress}%
-          </span>
-        )}
-        <TypeBadge type={node.type} />
-        {node.children.length > 0 && (
-          <div className="hidden w-20 sm:block">
-            <Progress value={node.progress} className="h-1.5" />
-          </div>
-        )}
-        <StatusBadge status={node.derivedStatus} className="hidden sm:inline-flex" />
+        <div className="flex flex-wrap items-center gap-1.5 pl-10 sm:contents">
+          <WorkItemNoteIndicator note={node.description ?? ""} />
+          <WorkItemAttachmentIndicator attachments={attachments} />
+          <WeightBadge weight={Number(node.weight)} className="hidden sm:inline" />
+          {node.children.length > 0 && (
+            <span className="hidden text-xs tabular-nums text-muted-foreground md:inline">
+              {node.progress}%
+            </span>
+          )}
+          <TypeBadge type={node.type} className="hidden sm:inline-flex" />
+          {node.children.length > 0 && (
+            <div className="hidden w-20 sm:block">
+              <Progress value={node.progress} className="h-1.5" />
+            </div>
+          )}
+          <StatusBadge status={node.derivedStatus} className="hidden sm:inline-flex" />
 
-        {!readOnly && (
-          <div className="flex opacity-0 transition-opacity group-hover:opacity-100">
-            {childTypes.length > 0 &&
-              childTypes.map((t) => (
-                <WorkItemFormDialog
-                  key={t}
-                  projectId={projectId}
-                  parentId={node.id}
-                  defaultType={t}
-                  attachments={attachmentsByWorkItem.get(node.id) ?? []}
-                  trigger={
-                    <Button variant="ghost" size="icon" className="h-7 w-7" title={`Add ${t}`}>
-                      <Plus className="h-3.5 w-3.5" />
-                    </Button>
-                  }
-                />
-              ))}
-            <WorkItemFormDialog
-              projectId={projectId}
-              parentId={node.parent_id}
-              defaultType={node.type}
-              item={node}
-              attachments={attachmentsByWorkItem.get(node.id) ?? []}
-              trigger={
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              }
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => reorderWorkItemAction(node.id, projectId, "up")}
-            >
-              <ArrowUp className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => reorderWorkItemAction(node.id, projectId, "down")}
-            >
-              <ArrowDown className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-destructive"
-              onClick={async () => {
-                if (confirm("Delete this item and all children?")) {
-                  await deleteWorkItemAction(node.id, projectId);
+          {!readOnly && (
+            <div className="flex opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+              {childTypes.length > 0 &&
+                childTypes.map((t) => (
+                  <WorkItemFormDialog
+                    key={t}
+                    projectId={projectId}
+                    parentId={node.id}
+                    defaultType={t}
+                    attachments={attachmentsByWorkItem.get(node.id) ?? []}
+                    trigger={
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title={`Add ${t}`}>
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    }
+                  />
+                ))}
+              <WorkItemFormDialog
+                projectId={projectId}
+                parentId={node.parent_id}
+                defaultType={node.type}
+                item={node}
+                attachments={attachmentsByWorkItem.get(node.id) ?? []}
+                trigger={
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                 }
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => reorderWorkItemAction(node.id, projectId, "up")}
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => reorderWorkItemAction(node.id, projectId, "down")}
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive"
+                onClick={async () => {
+                  if (confirm("Delete this item and all children?")) {
+                    await deleteWorkItemAction(node.id, projectId);
+                  }
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
       {isExpanded &&
         (node.children.length > 0 ? (
@@ -649,6 +694,8 @@ function WorkItemFormDialog({
                 <SelectItem value="not_started">Not Started</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="waiting_on_approval">Waiting on Approval</SelectItem>
+                <SelectItem value="waiting_on_vendor">Waiting on Vendor</SelectItem>
+                <SelectItem value="waiting_on_internal_owner">Waiting on Internal Owner</SelectItem>
                 <SelectItem value="waiting_on_carrier">Waiting on Carrier</SelectItem>
                 <SelectItem value="waiting_on_spruce">Waiting on Spruce</SelectItem>
                 <SelectItem value="completed">Complete</SelectItem>

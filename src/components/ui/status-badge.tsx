@@ -9,6 +9,8 @@ const statusStyles: Record<string, string> = {
   waiting_on_approval: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   waiting_on_carrier: "bg-orange-500/20 text-orange-300 border-orange-500/30",
   waiting_on_spruce: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+  waiting_on_vendor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+  waiting_on_internal_owner: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
   paused: "bg-amber-500/20 text-amber-300 border-amber-500/30",
 };
 

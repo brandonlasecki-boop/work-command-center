@@ -10,9 +10,13 @@ import { cn } from "@/lib/utils";
 export function PhaseBreakdown({
   items,
   accentColor,
+  selectedPhaseId = null,
+  onPhaseSelect,
 }: {
   items: WorkItem[];
   accentColor?: string;
+  selectedPhaseId?: string | null;
+  onPhaseSelect?: (phaseId: string) => void;
 }) {
   const phases = buildTree(items).filter((n) => n.type === "phase");
 
@@ -28,10 +32,31 @@ export function PhaseBreakdown({
           .filter((t) => t.status === "completed")
           .reduce((sum, t) => sum + Number(t.weight), 0);
 
+        const isSelected = selectedPhaseId === phase.id;
+        const isInteractive = Boolean(onPhaseSelect);
+
         return (
-          <div
+          <button
             key={phase.id}
-            className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur"
+            type="button"
+            disabled={!isInteractive}
+            onClick={() => onPhaseSelect?.(phase.id)}
+            aria-pressed={isSelected}
+            className={cn(
+              "rounded-2xl border bg-white/5 p-4 text-left backdrop-blur transition-all",
+              isInteractive && "cursor-pointer hover:border-white/20 hover:bg-white/[0.08]",
+              isSelected
+                ? "border-indigo-400/70 bg-indigo-500/10 ring-2 ring-indigo-400/50 shadow-[0_0_24px_rgba(99,102,241,0.2)]"
+                : "border-white/10"
+            )}
+            style={
+              isSelected && accentColor
+                ? {
+                    borderColor: `${accentColor}99`,
+                    boxShadow: `0 0 24px ${accentColor}33`,
+                  }
+                : undefined
+            }
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -57,7 +82,7 @@ export function PhaseBreakdown({
                 <span className="tabular-nums">{completedWeight.toFixed(1)}% earned</span>
               </div>
             </div>
-          </div>
+          </button>
         );
       })}
     </div>

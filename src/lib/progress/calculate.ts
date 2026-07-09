@@ -18,6 +18,10 @@ export function calcDerivedStatusFromLeaves(
   }
   if (leaves.some((l) => l.status === "waiting_on_carrier")) return "waiting_on_carrier";
   if (leaves.some((l) => l.status === "waiting_on_spruce")) return "waiting_on_spruce";
+  if (leaves.some((l) => l.status === "waiting_on_vendor")) return "waiting_on_vendor";
+  if (leaves.some((l) => l.status === "waiting_on_internal_owner")) {
+    return "waiting_on_internal_owner";
+  }
   if (leaves.some((l) => l.status === "waiting_on_approval")) return "waiting_on_approval";
   return "not_started";
 }

@@ -36,7 +36,7 @@ export function CommandCenterHeader({ winsToday }: { winsToday: number }) {
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-4 sm:gap-6">
+      <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-start sm:gap-6">
         <div className="text-right">
           <p className="text-sm text-muted-foreground">
             {format(now, "EEEE, MMMM d, yyyy")}

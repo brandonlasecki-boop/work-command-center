@@ -72,7 +72,7 @@ export default async function CompanyPage({
       </div>
 
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Projects</h2>
           <ProjectFormDialog
             companyId={id}

@@ -45,7 +45,6 @@ export type Database = {
       company_shares: {
         Row: {
           access_token: string
-          company_id: string
           created_at: string
           expires_at: string | null
           id: string
@@ -56,7 +55,6 @@ export type Database = {
         }
         Insert: {
           access_token: string
-          company_id: string
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -67,7 +65,6 @@ export type Database = {
         }
         Update: {
           access_token?: string
-          company_id?: string
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -76,12 +73,37 @@ export type Database = {
           viewer_email?: string
           viewer_name?: string
         }
+        Relationships: []
+      }
+      company_share_companies: {
+        Row: {
+          company_id: string
+          created_at: string
+          share_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          share_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          share_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "company_shares_company_id_fkey"
+            foreignKeyName: "company_share_companies_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_share_companies_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "company_shares"
             referencedColumns: ["id"]
           },
         ]
@@ -383,6 +405,8 @@ export type Database = {
         | "waiting_on_approval"
         | "waiting_on_carrier"
         | "waiting_on_spruce"
+        | "waiting_on_vendor"
+        | "waiting_on_internal_owner"
       work_item_type: "phase" | "subphase" | "task"
     }
     CompositeTypes: {
@@ -437,9 +461,12 @@ export type CompanyWithProgress = Company & {
   activeProjectCount: number
 }
 
-export type CompanyShareWithCompany = CompanyShare & {
-  company: Company
+export type CompanyShareWithCompanies = CompanyShare & {
+  companies: Company[]
 }
+
+/** @deprecated Use CompanyShareWithCompanies */
+export type CompanyShareWithCompany = CompanyShareWithCompanies
 
 export type DailyLogWithRelations = DailyLog & {
   company?: Company | null

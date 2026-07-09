@@ -19,6 +19,8 @@ const workItemSchema = z.object({
     "waiting_on_approval",
     "waiting_on_carrier",
     "waiting_on_spruce",
+    "waiting_on_vendor",
+    "waiting_on_internal_owner",
   ]).default("not_started"),
   weight: z.coerce.number().min(0).max(100).default(1),
 });

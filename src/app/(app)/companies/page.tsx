@@ -9,10 +9,12 @@ export default async function CompaniesPage() {
     <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Companies</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Companies</h1>
           <p className="text-muted-foreground">Manage the organizations you work with</p>
         </div>
-        <NewCompanyButton />
+        <div className="w-full sm:w-auto">
+          <NewCompanyButton />
+        </div>
       </div>
 
       {companies.length === 0 ? (

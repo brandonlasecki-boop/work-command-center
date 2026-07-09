@@ -103,7 +103,7 @@ export function ProjectFormDialog({
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" defaultValue={project?.description ?? ""} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => v && setStatus(v)}>
@@ -130,7 +130,7 @@ export function ProjectFormDialog({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="start_date">Start Date</Label>
               <Input id="start_date" name="start_date" type="date" defaultValue={project?.start_date ?? ""} />

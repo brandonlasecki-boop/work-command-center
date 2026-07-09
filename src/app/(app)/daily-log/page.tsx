@@ -25,7 +25,7 @@ export default async function DailyLogPage({
   return (
     <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Daily Log</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Daily Log</h1>
         <p className="text-muted-foreground">Track completed work across all companies</p>
       </div>
 

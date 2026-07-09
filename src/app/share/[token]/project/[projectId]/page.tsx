@@ -8,9 +8,11 @@ import { listProjectDocuments } from "@/lib/data/project-documents";
 import { listProjectAttachmentsWithTasks, groupAttachmentsByWorkItem } from "@/lib/data/attachments";
 import { calcProjectProgress, buildTree } from "@/lib/progress/calculate";
 import { requireShareAccess } from "@/lib/shares/access";
+import { shareIncludesCompany } from "@/lib/data/shares";
+import { ProjectPhaseFilterProvider } from "@/components/projects/ProjectPhaseFilter";
+import { ProjectPhaseBreakdownSection } from "@/components/projects/ProjectPhaseBreakdownSection";
+import { ProjectWorkItemsSection } from "@/components/projects/ProjectWorkItemsSection";
 import { ShareViewBanner } from "@/components/share/ShareViewBanner";
-import { WorkItemTree } from "@/components/work-items/WorkItemTree";
-import { PhaseBreakdown } from "@/components/projects/PhaseBreakdown";
 import { ProjectResourcesPanel } from "@/components/projects/ProjectResourcesPanel";
 import { ProjectDocumentsPanel } from "@/components/projects/ProjectDocumentsPanel";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
@@ -29,9 +31,10 @@ export default async function ShareProjectPage({
   const share = await requireShareAccess(token);
 
   const project = await getProject(projectId);
-  if (!project || project.company_id !== share.company_id) notFound();
+  if (!project || !shareIncludesCompany(share, project.company_id)) notFound();
 
-  const company = share.company;
+  const company = share.companies.find((item) => item.id === project.company_id);
+  if (!company) notFound();
   const workItems = await listWorkItemsByProject(projectId);
   const progress = calcProjectProgress(project, workItems);
   const phases = buildTree(workItems).filter((n) => n.type === "phase");
@@ -45,13 +48,14 @@ export default async function ShareProjectPage({
   const attachmentsByWorkItem = groupAttachmentsByWorkItem(projectAttachments);
 
   return (
-    <div className="min-h-screen">
-      <ShareViewBanner share={share} />
+    <ProjectPhaseFilterProvider>
+      <div className="min-h-screen">
+        <ShareViewBanner share={share} />
 
-      <div className="animate-fade-in mx-auto w-full min-w-0 max-w-[1920px] space-y-6 p-4 sm:p-6 lg:p-8 xl:p-10">
+        <div className="animate-fade-in mx-auto w-full min-w-0 max-w-[1920px] space-y-6 p-4 sm:p-6 lg:p-8 xl:p-10">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <Link href={`/share/${token}`}>
+            <Link href={`/share/${token}/company/${company.id}`}>
               <Button variant="ghost" size="icon" className="shrink-0">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -88,31 +92,23 @@ export default async function ShareProjectPage({
         </div>
 
         {phases.length > 0 && (
-          <section>
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold">Phase Breakdown</h2>
-                <p className="text-sm text-muted-foreground">
-                  {completedTasks}/{taskCount} tasks complete · weighted progress
-                </p>
-              </div>
-              <p className="text-3xl font-bold tabular-nums gradient-text">{progress}%</p>
-            </div>
-            <PhaseBreakdown items={workItems} accentColor={company.color} />
-          </section>
+          <ProjectPhaseBreakdownSection
+            items={workItems}
+            accentColor={company.color}
+            completedTasks={completedTasks}
+            taskCount={taskCount}
+            progress={progress}
+          />
         )}
 
         <div className="grid min-w-0 gap-6 xl:grid-cols-12 xl:gap-8">
           <div className="min-w-0 space-y-6 xl:col-span-8">
-            <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
-              <h2 className="mb-4 text-lg font-semibold">Work Items</h2>
-              <WorkItemTree
-                items={workItems}
-                projectId={projectId}
-                attachmentsByWorkItem={attachmentsByWorkItem}
-                readOnly
-              />
-            </GlassCard>
+            <ProjectWorkItemsSection
+              items={workItems}
+              projectId={projectId}
+              attachmentsByWorkItem={attachmentsByWorkItem}
+              readOnly
+            />
 
             <ProjectDocumentsPanel
               projectId={projectId}
@@ -131,5 +127,6 @@ export default async function ShareProjectPage({
         </div>
       </div>
     </div>
+    </ProjectPhaseFilterProvider>
   );
 }

@@ -16,7 +16,7 @@ export function CommandCenterDashboard({ data }: { data: DashboardSummary }) {
         <div className="min-w-0 flex-1">
           <CommandCenterHeader winsToday={data.todayLogs.length} />
         </div>
-        <div className="shrink-0">
+        <div className="w-full sm:w-auto sm:shrink-0">
           <NewCompanyButton />
         </div>
       </div>
