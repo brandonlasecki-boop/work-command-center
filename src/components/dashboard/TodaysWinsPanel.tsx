@@ -41,7 +41,7 @@ export function TodaysWinsPanel({ logs }: { logs: DailyLogWithRelations[] }) {
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 text-sm font-medium">{log.title}</p>
+                <p className="mt-0.5 break-words text-sm font-medium">{log.title}</p>
               </div>
             </div>
           ))}

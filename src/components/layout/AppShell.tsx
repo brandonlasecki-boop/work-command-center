@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-white/10 bg-black/40 backdrop-blur-xl">
         <div className="border-b border-white/10 px-6 py-6">
           <Link href="/dashboard" className="block">
@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </form>
         </div>
       </aside>
-      <main className="ml-64 flex-1 p-8">{children}</main>
+      <main className="ml-64 min-w-0 flex-1 overflow-x-hidden p-4 md:p-6 lg:p-8">{children}</main>
     </div>
   );
 }

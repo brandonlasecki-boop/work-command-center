@@ -46,8 +46,8 @@ export function CompanyOverviewCard({
                 {getCompanyInitials(company.name)}
               </div>
             )}
-            <div>
-              <h3 className="font-semibold group-hover:company-accent-text transition-colors">
+            <div className="min-w-0">
+              <h3 className="truncate font-semibold group-hover:company-accent-text transition-colors">
                 {company.name}
               </h3>
               <span

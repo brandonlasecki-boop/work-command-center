@@ -26,7 +26,7 @@ export function RecentActivityPanel({ logs }: { logs: DailyLogWithRelations[] })
                 <Pencil className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm">
+                <p className="break-words text-sm">
                   <span className="text-muted-foreground">
                     {log.work_item_id ? "Completed task" : "Logged work"}
                   </span>

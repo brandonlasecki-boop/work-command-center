@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}>
-      <body className="min-h-full">
+      <body className="min-h-full overflow-x-hidden">
         {children}
         <Toaster richColors theme="dark" />
       </body>

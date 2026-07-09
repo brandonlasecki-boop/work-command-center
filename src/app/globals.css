@@ -157,6 +157,13 @@
   }
   .animate-marquee {
     animation: marquee 30s linear infinite;
+    will-change: transform;
+  }
+
+  .marquee-mask {
+    overflow: hidden;
+    max-width: 100%;
+    min-width: 0;
   }
   .animate-fade-in {
     animation: fade-in 0.5s ease-out;

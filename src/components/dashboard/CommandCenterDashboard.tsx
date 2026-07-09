@@ -11,12 +11,14 @@ import type { DashboardSummary } from "@/lib/types/database";
 
 export function CommandCenterDashboard({ data }: { data: DashboardSummary }) {
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+    <div className="animate-fade-in min-w-0 max-w-full space-y-6">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <CommandCenterHeader winsToday={data.todayLogs.length} />
         </div>
-        <NewCompanyButton />
+        <div className="shrink-0">
+          <NewCompanyButton />
+        </div>
       </div>
 
       <section>
@@ -30,7 +32,7 @@ export function CommandCenterDashboard({ data }: { data: DashboardSummary }) {
             </p>
           </GlassCard>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {data.companies.map((company) => (
               <CompanyOverviewCard
                 key={company.id}
@@ -42,14 +44,14 @@ export function CommandCenterDashboard({ data }: { data: DashboardSummary }) {
         )}
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-12">
-        <div className="xl:col-span-3">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-3">
           <TodaysWinsPanel logs={data.todayLogs} />
         </div>
-        <div className="xl:col-span-5">
+        <div className="min-w-0 xl:col-span-5">
           <RecentActivityPanel logs={data.recentWins} />
         </div>
-        <div className="xl:col-span-4">
+        <div className="min-w-0 xl:col-span-4">
           <DashboardSidebar
             companies={data.companies}
             activeProjects={data.activeProjects}
