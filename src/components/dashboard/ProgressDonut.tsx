@@ -21,7 +21,7 @@ export function ProgressDonut({
   return (
     <div className="flex items-center gap-4">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block -rotate-90">
           <circle
             cx={cx}
             cy={cy}
@@ -51,9 +51,14 @@ export function ProgressDonut({
             </linearGradient>
           </defs>
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums">{averageProgress}%</span>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="leading-none text-2xl font-bold tabular-nums">
+              {averageProgress}
+              <span className="text-[0.62em] font-bold opacity-90">%</span>
+            </span>
+          </div>
+          <span className="absolute inset-x-0 bottom-[22%] text-center text-[10px] leading-none uppercase tracking-wider text-muted-foreground">
             Avg Progress
           </span>
         </div>

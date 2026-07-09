@@ -85,17 +85,6 @@ export async function getDashboardSummary(
     : recentWinsRaw;
   const recentWins = await enrichDailyLogs(scopedRecentWins.slice(0, 10));
 
-  const today = new Date().toISOString().split("T")[0];
-  const tasksCompletedToday = workItems.filter(
-    (w) => w.status === "completed" && w.completed_at?.startsWith(today)
-  ).length;
-
-  const onTrackCount = companiesWithProgress.filter((c) => c.progress >= 50).length;
-  const onTrackPercent =
-    companiesWithProgress.length > 0
-      ? Math.round((onTrackCount / companiesWithProgress.length) * 100)
-      : 0;
-
   const averageProgress =
     companiesWithProgress.length > 0
       ? Math.round(
@@ -110,11 +99,6 @@ export async function getDashboardSummary(
     todayLogs,
     focusItems,
     recentWins,
-    todayStats: {
-      tasksCompleted: tasksCompletedToday,
-      workLogs: todayLogs.length,
-      onTrackPercent,
-      averageProgress,
-    },
+    averageProgress,
   };
 }

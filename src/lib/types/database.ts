@@ -493,18 +493,11 @@ export type DailyLogEnriched = DailyLogWithRelations & {
   attachments: WorkItemAttachmentWithUrl[]
 }
 
-export type DashboardTodayStats = {
-  tasksCompleted: number
-  workLogs: number
-  onTrackPercent: number
-  averageProgress: number
-}
-
 export type DashboardSummary = {
   companies: CompanyWithProgress[]
   activeProjects: ProjectWithProgress[]
   todayLogs: DailyLogWithRelations[]
   focusItems: (WorkItem & { project: Project; company: Company })[]
   recentWins: DailyLogEnriched[]
-  todayStats: DashboardTodayStats
+  averageProgress: number
 }

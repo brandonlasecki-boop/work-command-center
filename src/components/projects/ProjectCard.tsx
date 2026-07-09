@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateProjectAction, deleteProjectAction } from "@/app/actions/projects";
-import { Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 import type { ProjectWithProgress } from "@/lib/types/database";
 
 export function ProjectCard({
@@ -37,12 +37,34 @@ export function ProjectCard({
 }) {
   return (
     <Link href={href ?? `/project/${project.id}`} className="block min-w-0">
-      <GlassCard className="group overflow-hidden p-4 sm:p-5">
+      <GlassCard
+        className="group glass-card-interactive relative overflow-hidden p-4 sm:p-5"
+        style={
+          companyColor
+            ? ({
+                "--company-accent": companyColor,
+                borderLeftWidth: "3px",
+                borderLeftColor: companyColor,
+              } as React.CSSProperties)
+            : undefined
+        }
+      >
+        {companyColor && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-60"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${companyColor}, transparent)`,
+            }}
+          />
+        )}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold transition-colors group-hover:text-indigo-300">
-              {project.name}
-            </h3>
+            <div className="flex items-start gap-2">
+              <h3 className="min-w-0 flex-1 truncate font-semibold transition-colors group-hover:company-accent-text">
+                {project.name}
+              </h3>
+              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:company-accent-text" />
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <StatusBadge status={project.status} />
               <PriorityBadge priority={project.priority} />
@@ -64,6 +86,9 @@ export function ProjectCard({
             {project.description}
           </p>
         )}
+        <p className="mt-3 text-xs text-muted-foreground/70 transition-colors group-hover:text-muted-foreground">
+          View project details
+        </p>
       </GlassCard>
     </Link>
   );

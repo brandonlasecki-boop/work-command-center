@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { MonitorOff } from "lucide-react";
+import { MonitorOff, Sparkles } from "lucide-react";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +15,43 @@ import {
   SectionTitle,
   TvTicker,
 } from "@/components/tv/tv-ui";
+import { useTvTaskCompletionCelebration } from "@/hooks/useTvTaskCompletionCelebration";
 import type { DashboardSummary } from "@/lib/types/database";
+
+function TvCompletionBanner({ title }: { title: string }) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-6 z-30 flex justify-center px-8 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="flex max-w-3xl items-center gap-4 rounded-2xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/25 via-cyan-500/20 to-violet-500/25 px-8 py-4 shadow-[0_0_60px_rgba(16,185,129,0.35)] backdrop-blur-md">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300 ring-2 ring-emerald-300/40">
+          <Sparkles className="h-6 w-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[13px] font-bold uppercase tracking-[0.28em] text-emerald-300">
+            Task Completed
+          </p>
+          <p className="truncate text-[28px] font-bold leading-tight text-white">{title}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function TvModeClient({ data }: { data: DashboardSummary }) {
   const router = useRouter();
   const scale = useCanvasScale();
+  const [celebration, setCelebration] = useState<{ id: string; title: string } | null>(null);
+
+  const handleTaskCompleted = useCallback((task: { id: string; title: string }) => {
+    setCelebration(task);
+  }, []);
+
+  useTvTaskCompletionCelebration(handleTaskCompleted);
+
+  useEffect(() => {
+    if (!celebration) return;
+    const timeout = window.setTimeout(() => setCelebration(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [celebration]);
 
   useEffect(() => {
     document.documentElement.style.overflow = "hidden";
@@ -81,6 +113,7 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
           }}
         >
           <div className="tv-canvas relative flex h-full w-full flex-col overflow-hidden bg-gradient-to-br from-[#0c0e1a] via-[#0f1225] to-[#12102a] p-8">
+            {celebration && <TvCompletionBanner title={celebration.title} />}
             {/* Ambient glow */}
             <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl" />

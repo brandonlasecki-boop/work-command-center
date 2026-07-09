@@ -4,9 +4,13 @@ import { useState } from "react";
 import {
   DndContext,
   PointerSensor,
+  TouchSensor,
   closestCenter,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -182,6 +186,29 @@ function getChildTypes(parentType: WorkItemType | null): WorkItemType[] {
   return [];
 }
 
+function getSiblingIds(items: WorkItem[], parentId: string | null): Set<string> {
+  return new Set(
+    items.filter((item) => item.parent_id === parentId).map((item) => item.id)
+  );
+}
+
+function createSiblingCollisionDetection(items: WorkItem[]): CollisionDetection {
+  return (args) => {
+    const activeItem = items.find((item) => item.id === args.active.id);
+    if (!activeItem) return closestCenter(args);
+
+    const siblingIds = getSiblingIds(items, activeItem.parent_id);
+    for (const algorithm of [pointerWithin, rectIntersection, closestCenter]) {
+      const collisions = algorithm(args).filter((collision) =>
+        siblingIds.has(String(collision.id))
+      );
+      if (collisions.length > 0) return collisions;
+    }
+
+    return [];
+  };
+}
+
 export function WorkItemTree({
   items,
   projectId,
@@ -208,8 +235,12 @@ export function WorkItemTree({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 6 },
     })
   );
+  const collisionDetection = createSiblingCollisionDetection(items);
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -341,10 +372,11 @@ export function WorkItemTree({
         ) : (
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={collisionDetection}
             onDragEnd={handleDragEnd}
           >
             <SortableContext
+              id="root"
               items={filteredTree.map((node) => node.id)}
               strategy={verticalListSortingStrategy}
             >
@@ -394,6 +426,8 @@ function SortableWorkItemRow({
   dragDisabled?: boolean;
   items: WorkItem[];
 }) {
+  const [expanded, setExpanded] = useState(true);
+  const isExpanded = forceExpanded || expanded;
   const {
     attributes,
     listeners,
@@ -402,7 +436,11 @@ function SortableWorkItemRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: node.id, disabled: dragDisabled });
+  } = useSortable({
+    id: node.id,
+    disabled: dragDisabled,
+    data: { type: "work-item", parentId: node.parent_id },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -410,19 +448,42 @@ function SortableWorkItemRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && "relative z-10 opacity-60")}>
-      <WorkItemRow
-        node={node}
-        projectId={projectId}
-        depth={depth}
-        forceExpanded={forceExpanded}
-        attachmentsByWorkItem={attachmentsByWorkItem}
-        readOnly={readOnly}
-        dragDisabled={dragDisabled}
-        items={items}
-        dragHandleRef={setActivatorNodeRef}
-        dragHandleProps={dragDisabled ? undefined : { ...attributes, ...listeners }}
-      />
+    <div>
+      <div ref={setNodeRef} style={style} className={cn(isDragging && "relative z-10 opacity-60")}>
+        <WorkItemRow
+          node={node}
+          projectId={projectId}
+          depth={depth}
+          isExpanded={isExpanded}
+          onToggleExpanded={() => setExpanded((value) => !value)}
+          attachmentsByWorkItem={attachmentsByWorkItem}
+          readOnly={readOnly}
+          dragDisabled={dragDisabled}
+          dragHandleRef={setActivatorNodeRef}
+          dragHandleProps={dragDisabled ? undefined : { ...attributes, ...listeners }}
+        />
+      </div>
+      {isExpanded && node.children.length > 0 && (
+        <SortableContext
+          id={node.id}
+          items={node.children.map((child) => child.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {node.children.map((child) => (
+            <SortableWorkItemRow
+              key={child.id}
+              node={child}
+              projectId={projectId}
+              depth={depth + 1}
+              forceExpanded={forceExpanded}
+              attachmentsByWorkItem={attachmentsByWorkItem}
+              readOnly={readOnly}
+              dragDisabled={dragDisabled}
+              items={items}
+            />
+          ))}
+        </SortableContext>
+      )}
     </div>
   );
 }
@@ -431,27 +492,25 @@ function WorkItemRow({
   node,
   projectId,
   depth,
-  forceExpanded = false,
+  isExpanded,
+  onToggleExpanded,
   attachmentsByWorkItem,
   readOnly = false,
   dragDisabled = false,
-  items,
   dragHandleRef,
   dragHandleProps,
 }: {
   node: WorkItemNode;
   projectId: string;
   depth: number;
-  forceExpanded?: boolean;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
   attachmentsByWorkItem: Map<string, WorkItemAttachmentWithUrl[]>;
   readOnly?: boolean;
   dragDisabled?: boolean;
-  items: WorkItem[];
   dragHandleRef?: (element: HTMLElement | null) => void;
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }) {
-  const [expanded, setExpanded] = useState(true);
-  const isExpanded = forceExpanded || expanded;
   const Icon = typeIcons[node.type];
   const childTypes = getChildTypes(node.type);
   const attachments = attachmentsByWorkItem.get(node.id) ?? [];
@@ -462,167 +521,144 @@ function WorkItemRow({
   }
 
   return (
-    <div>
-      <div
-        className={cn(
-          "group flex min-w-0 flex-col gap-1.5 rounded-xl border border-transparent py-2 pr-3 pl-[calc(var(--depth)*12px+8px)] transition-colors sm:flex-row sm:items-center sm:gap-2 sm:pl-[calc(var(--depth)*24px+12px)] hover:border-white/10 hover:bg-white/5",
-          node.type === "task" && isWaitingStatus(node.status) &&
-            "border-amber-500/30 bg-amber-500/5",
-          node.type === "task" && node.status === "blocked" &&
-            "border-red-500/30 bg-red-500/5",
-        )}
-        style={{ "--depth": depth } as React.CSSProperties}
-      >
-        <div className="flex min-w-0 items-center gap-2 sm:contents">
-          {!readOnly && !dragDisabled && dragHandleProps ? (
-            <button
-              type="button"
-              ref={dragHandleRef}
-              className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
-              aria-label="Drag to reorder"
-              {...dragHandleProps}
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-          ) : (
-            <span className="inline-block w-4 shrink-0" />
-          )}
-
+    <div
+      className={cn(
+        "group flex min-w-0 flex-col gap-1.5 rounded-xl border border-transparent py-2 pr-3 pl-[calc(var(--depth)*12px+8px)] transition-colors sm:flex-row sm:items-center sm:gap-2 sm:pl-[calc(var(--depth)*24px+12px)] hover:border-white/10 hover:bg-white/5",
+        node.type === "task" && isWaitingStatus(node.status) &&
+          "border-amber-500/30 bg-amber-500/5",
+        node.type === "task" && node.status === "blocked" &&
+          "border-red-500/30 bg-red-500/5",
+      )}
+      style={{ "--depth": depth } as React.CSSProperties}
+    >
+      <div className="flex min-w-0 items-center gap-2 sm:contents">
+        {!readOnly && !dragDisabled && dragHandleProps ? (
           <button
             type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="text-muted-foreground"
+            ref={dragHandleRef}
+            className="touch-none cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+            aria-label="Drag to reorder"
+            {...dragHandleProps}
           >
-            {node.children.length > 0 ? (
-              isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+            <GripVertical className="h-4 w-4" />
+          </button>
+        ) : (
+          <span className="inline-block w-4 shrink-0" />
+        )}
+
+        <button
+          type="button"
+          onClick={onToggleExpanded}
+          className="text-muted-foreground"
+        >
+          {node.children.length > 0 ? (
+            isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+          ) : (
+            <span className="inline-block w-4" />
+          )}
+        </button>
+
+        {readOnly ? (
+          <span className="shrink-0">
+            {node.status === "completed" ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
             ) : (
-              <span className="inline-block w-4" />
+              <Circle className="h-5 w-5 text-muted-foreground" />
+            )}
+          </span>
+        ) : (
+          <button type="button" onClick={handleToggle} className="shrink-0">
+            {node.status === "completed" ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            ) : (
+              <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-400" />
             )}
           </button>
+        )}
 
-          {readOnly ? (
-            <span className="shrink-0">
-              {node.status === "completed" ? (
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-              ) : (
-                <Circle className="h-5 w-5 text-muted-foreground" />
-              )}
-            </span>
-          ) : (
-            <button type="button" onClick={handleToggle} className="shrink-0">
-              {node.status === "completed" ? (
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-              ) : (
-                <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-400" />
-              )}
-            </button>
-          )}
-
-          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className={cn("min-w-0 flex-1 truncate text-sm", node.status === "completed" && "text-muted-foreground line-through")}>
-            {node.title}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5 pl-10 sm:contents">
-          <WorkItemNoteIndicator note={node.description ?? ""} />
-          <WorkItemAttachmentIndicator attachments={attachments} />
-          <WeightBadge weight={Number(node.weight)} className="hidden sm:inline" />
-          {node.children.length > 0 && (
-            <span className="hidden text-xs tabular-nums text-muted-foreground md:inline">
-              {node.progress}%
-            </span>
-          )}
-          <TypeBadge type={node.type} className="hidden sm:inline-flex" />
-          {node.children.length > 0 && (
-            <div className="hidden w-20 sm:block">
-              <Progress value={node.progress} className="h-1.5" />
-            </div>
-          )}
-          <StatusBadge status={node.derivedStatus} className="hidden sm:inline-flex" />
-
-          {!readOnly && (
-            <div className="flex opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-              {childTypes.length > 0 &&
-                childTypes.map((t) => (
-                  <WorkItemFormDialog
-                    key={t}
-                    projectId={projectId}
-                    parentId={node.id}
-                    defaultType={t}
-                    attachments={attachmentsByWorkItem.get(node.id) ?? []}
-                    trigger={
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title={`Add ${t}`}>
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                    }
-                  />
-                ))}
-              <WorkItemFormDialog
-                projectId={projectId}
-                parentId={node.parent_id}
-                defaultType={node.type}
-                item={node}
-                attachments={attachmentsByWorkItem.get(node.id) ?? []}
-                trigger={
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                }
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => reorderWorkItemAction(node.id, projectId, "up")}
-              >
-                <ArrowUp className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => reorderWorkItemAction(node.id, projectId, "down")}
-              >
-                <ArrowDown className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive"
-                onClick={async () => {
-                  if (confirm("Delete this item and all children?")) {
-                    await deleteWorkItemAction(node.id, projectId);
-                  }
-                }}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
-        </div>
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className={cn("min-w-0 flex-1 truncate text-sm", node.status === "completed" && "text-muted-foreground line-through")}>
+          {node.title}
+        </span>
       </div>
-      {isExpanded &&
-        (node.children.length > 0 ? (
-          <SortableContext
-            items={node.children.map((child) => child.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {node.children.map((child) => (
-              <SortableWorkItemRow
-                key={child.id}
-                node={child}
-                projectId={projectId}
-                depth={depth + 1}
-                forceExpanded={forceExpanded}
-                attachmentsByWorkItem={attachmentsByWorkItem}
-                readOnly={readOnly}
-                dragDisabled={dragDisabled}
-                items={items}
-              />
-            ))}
-          </SortableContext>
-        ) : null)}
+
+      <div className="flex flex-wrap items-center gap-1.5 pl-10 sm:contents">
+        <WorkItemNoteIndicator note={node.description ?? ""} />
+        <WorkItemAttachmentIndicator attachments={attachments} />
+        <WeightBadge weight={Number(node.weight)} className="hidden sm:inline" />
+        {node.children.length > 0 && (
+          <span className="hidden text-xs tabular-nums text-muted-foreground md:inline">
+            {node.progress}%
+          </span>
+        )}
+        <TypeBadge type={node.type} className="hidden sm:inline-flex" />
+        {node.children.length > 0 && (
+          <div className="hidden w-20 sm:block">
+            <Progress value={node.progress} className="h-1.5" />
+          </div>
+        )}
+        <StatusBadge status={node.derivedStatus} className="hidden sm:inline-flex" />
+
+        {!readOnly && (
+          <div className="flex opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+            {childTypes.length > 0 &&
+              childTypes.map((t) => (
+                <WorkItemFormDialog
+                  key={t}
+                  projectId={projectId}
+                  parentId={node.id}
+                  defaultType={t}
+                  attachments={attachmentsByWorkItem.get(node.id) ?? []}
+                  trigger={
+                    <Button variant="ghost" size="icon" className="h-7 w-7" title={`Add ${t}`}>
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  }
+                />
+              ))}
+            <WorkItemFormDialog
+              projectId={projectId}
+              parentId={node.parent_id}
+              defaultType={node.type}
+              item={node}
+              attachments={attachmentsByWorkItem.get(node.id) ?? []}
+              trigger={
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => reorderWorkItemAction(node.id, projectId, "up")}
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => reorderWorkItemAction(node.id, projectId, "down")}
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive"
+              onClick={async () => {
+                if (confirm("Delete this item and all children?")) {
+                  await deleteWorkItemAction(node.id, projectId);
+                }
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

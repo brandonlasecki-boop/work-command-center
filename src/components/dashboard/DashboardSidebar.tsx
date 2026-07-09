@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { CheckCircle2, ClipboardList, Clock, Target } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Progress } from "@/components/ui/progress";
 import { ProgressDonut } from "@/components/dashboard/ProgressDonut";
 import type {
   CompanyWithProgress,
-  DashboardTodayStats,
   ProjectWithProgress,
   WorkItem,
   Project,
@@ -18,13 +16,13 @@ export function DashboardSidebar({
   companies,
   activeProjects,
   focusItems,
-  todayStats,
+  averageProgress,
   shareToken,
 }: {
   companies: CompanyWithProgress[];
   activeProjects: ProjectWithProgress[];
   focusItems: FocusItem[];
-  todayStats: DashboardTodayStats;
+  averageProgress: number;
   shareToken?: string;
 }) {
   const topProject = activeProjects[0];
@@ -84,57 +82,10 @@ export function DashboardSidebar({
 
       <GlassCard className="p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Today&apos;s Stats
-        </h2>
-        <div className="space-y-3">
-          <StatRow
-            icon={CheckCircle2}
-            label="Tasks Completed"
-            value={String(todayStats.tasksCompleted)}
-          />
-          <StatRow
-            icon={ClipboardList}
-            label="Work Logs"
-            value={String(todayStats.workLogs)}
-          />
-          <StatRow icon={Clock} label="Focus Time" value="—" />
-          <StatRow
-            icon={Target}
-            label="On Track"
-            value={`${todayStats.onTrackPercent}%`}
-          />
-        </div>
-      </GlassCard>
-
-      <GlassCard className="p-5">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           All Projects Progress
         </h2>
-        <ProgressDonut
-          companies={companies}
-          averageProgress={todayStats.averageProgress}
-        />
+        <ProgressDonut companies={companies} averageProgress={averageProgress} />
       </GlassCard>
-    </div>
-  );
-}
-
-function StatRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        {label}
-      </div>
-      <span className="font-semibold tabular-nums">{value}</span>
     </div>
   );
 }

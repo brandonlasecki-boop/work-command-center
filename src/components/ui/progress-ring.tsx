@@ -28,10 +28,20 @@ export function ProgressRing({
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (progress / 100) * circumference;
   const color = accentColor ?? "oklch(0.65 0.2 280)";
+  const rounded = Math.round(progress);
 
   return (
-    <div className={cn("relative inline-flex shrink-0 items-center justify-center", className)}>
-      <svg width={size} height={size} className="-rotate-90 animate-pulse-slow">
+    <div
+      className={cn("relative shrink-0", className)}
+      style={{ width: size, height: size }}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="block -rotate-90 animate-pulse-slow"
+        aria-hidden
+      >
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -53,18 +63,21 @@ export function ProgressRing({
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className={cn(
-            "font-bold tabular-nums",
-            percentClassName ?? (large ? "text-3xl" : "text-sm")
-          )}
-          style={percentStyle}
-        >
-          {Math.round(progress)}%
-        </span>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 grid place-items-center">
+          <span
+            className={cn(
+              "leading-none font-bold tabular-nums",
+              percentClassName ?? (large ? "text-3xl" : "text-sm")
+            )}
+            style={percentStyle}
+          >
+            {rounded}
+            <span className="text-[0.62em] font-bold opacity-90">%</span>
+          </span>
+        </div>
         {label && (
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="absolute inset-x-0 bottom-[22%] text-center text-[10px] leading-none uppercase tracking-wider text-muted-foreground">
             {label}
           </span>
         )}

@@ -68,7 +68,7 @@ export function CommandCenterDashboard({
             companies={data.companies}
             activeProjects={data.activeProjects}
             focusItems={data.focusItems}
-            todayStats={data.todayStats}
+            averageProgress={data.averageProgress}
             shareToken={shareToken}
           />
         </div>
