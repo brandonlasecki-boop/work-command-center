@@ -4,14 +4,17 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, MonitorOff } from "lucide-react";
+import { MonitorOff } from "lucide-react";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { useTvSizing } from "@/components/tv/useTvSizing";
 import type { DashboardSummary } from "@/lib/types/database";
+import { cn } from "@/lib/utils";
 
 export function TvModeClient({ data }: { data: DashboardSummary }) {
   const router = useRouter();
+  const sizing = useTvSizing();
 
   useEffect(() => {
     const interval = setInterval(() => router.refresh(), 30000);
@@ -26,52 +29,74 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [router]);
 
-  const tickerItems = data.todayLogs.length > 0
-    ? [...data.todayLogs, ...data.todayLogs]
-    : [{ id: "empty", title: "No wins logged today yet — go get one!", company: null, project: null, log_date: "", description: null, created_at: "", company_id: "", project_id: null, work_item_id: null }];
+  const tickerItems =
+    data.todayLogs.length > 0
+      ? [...data.todayLogs, ...data.todayLogs]
+      : [
+          {
+            id: "empty",
+            title: "No wins logged today yet — go get one!",
+            company: null,
+            project: null,
+            log_date: "",
+            description: null,
+            created_at: "",
+            company_id: "",
+            project_id: null,
+            work_item_id: null,
+          },
+        ];
+
+  const projectCols = sizing.isWide ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-1 sm:grid-cols-2";
+  const mainCols = sizing.isCompact
+    ? "grid-cols-1"
+    : sizing.isWide
+      ? "grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)]"
+      : "grid-cols-1 lg:grid-cols-2";
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-8 animate-fade-in">
-      <div className="fixed right-6 top-6 z-50 flex items-center gap-2">
+    <div
+      className="tv-mode relative flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 animate-fade-in"
+      style={{ padding: "var(--tv-pad)", gap: "var(--tv-gap)" }}
+    >
+      <div className="absolute right-[var(--tv-pad)] top-[var(--tv-pad)] z-50">
         <Button
           variant="outline"
           size="sm"
           nativeButton={false}
           render={<Link href="/dashboard" />}
-          className="border-white/20 bg-black/40 backdrop-blur hover:bg-white/10"
+          className="border-white/20 bg-black/40 text-[length:var(--tv-small)] backdrop-blur hover:bg-white/10"
         >
-          <MonitorOff className="mr-2 h-4 w-4" />
+          <MonitorOff className="mr-2 h-[1.2em] w-[1.2em]" />
           Exit TV Mode
         </Button>
       </div>
 
-      <header className="mb-8 flex items-end justify-between">
-        <div>
-          <Link
-            href="/dashboard"
-            className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-          <h1 className="text-4xl font-bold tracking-tight gradient-text md:text-5xl">
-            Work Command Center
-          </h1>
-          <p className="mt-1 text-lg text-muted-foreground">
+      {/* Header */}
+      <header className="flex shrink-0 items-end justify-between gap-4 pr-36">
+        <div className="min-w-0">
+          <h1 className="tv-title font-bold tracking-tight gradient-text">Work Command Center</h1>
+          <p className="tv-subtitle mt-1 text-muted-foreground">
             {format(new Date(), "EEEE, MMMM d, yyyy")}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-3xl font-bold tabular-nums">{data.todayLogs.length}</p>
-          <p className="text-sm text-muted-foreground">wins today</p>
+        <div className="shrink-0 text-right">
+          <p className="tv-stat font-bold tabular-nums">{data.todayLogs.length}</p>
+          <p className="tv-small text-muted-foreground">wins today</p>
         </div>
       </header>
 
       {/* Ticker */}
-      <div className="mb-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5 py-3 backdrop-blur">
+      <div
+        className="shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
+        style={{ paddingBlock: "calc(var(--tv-gap) * 0.6)" }}
+      >
         <div className="animate-marquee flex whitespace-nowrap">
           {tickerItems.map((log, i) => (
-            <span key={`${log.id}-${i}`} className="mx-8 inline-flex items-center gap--2 text-lg">
+            <span
+              key={`${log.id}-${i}`}
+              className="mx-[2vw] inline-flex items-center gap-2 tv-body"
+            >
               <span className="text-emerald-400">✓</span>
               {log.title}
               {"company" in log && log.company && (
@@ -82,110 +107,151 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      {/* Main dashboard — fills remaining height */}
+      <div
+        className={cn("grid min-h-0 flex-1", mainCols)}
+        style={{ gap: "var(--tv-gap)" }}
+      >
         {/* Companies */}
-        <section className="lg:col-span-1">
-          <h2 className="mb-4 text-xl font-semibold uppercase tracking-wider text-muted-foreground">
+        <section className="flex min-h-0 flex-col">
+          <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
             Companies
           </h2>
-          <div className="space-y-4">
+          <div
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+            style={{ gap: "var(--tv-gap)" }}
+          >
             {data.companies.map((company) => (
               <div
                 key={company.id}
-                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur"
-                style={{ "--company-accent": company.color } as React.CSSProperties}
+                className="flex shrink-0 items-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
+                style={
+                  {
+                    "--company-accent": company.color,
+                    gap: "var(--tv-gap)",
+                    padding: "var(--tv-card-pad)",
+                  } as React.CSSProperties
+                }
               >
                 <ProgressRing
                   progress={company.progress}
-                  size={72}
-                  strokeWidth={5}
+                  size={sizing.companyRing}
+                  strokeWidth={sizing.strokeCompany}
                   accentColor={company.color}
                   large
+                  percentClassName="text-[length:var(--tv-percent-lg)]"
                 />
-                <div>
-                  <h3 className="text-xl font-bold">{company.name}</h3>
-                  <p className="text-sm text-muted-foreground">
+                <div className="min-w-0">
+                  <h3 className="tv-body truncate font-bold">{company.name}</h3>
+                  <p className="tv-small text-muted-foreground">
                     {company.activeProjectCount} active projects
                   </p>
                 </div>
               </div>
             ))}
             {data.companies.length === 0 && (
-              <p className="text-muted-foreground">No companies configured</p>
+              <p className="tv-body text-muted-foreground">No companies configured</p>
             )}
           </div>
         </section>
 
-        {/* Active Projects + Focus */}
-        <section className="lg:col-span-2 space-y-8">
-          <div>
-            <h2 className="mb-4 text-xl font-semibold uppercase tracking-wider text-muted-foreground">
-              Active Projects
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {data.activeProjects.slice(0, 6).map((project) => (
-                <div
-                  key={project.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">{project.name}</h3>
-                      <p className="text-sm text-muted-foreground">{project.company?.name}</p>
-                    </div>
-                    <ProgressRing
-                      progress={project.progress}
-                      size={56}
-                      strokeWidth={4}
-                      accentColor={project.company?.color}
-                    />
+        {/* Active Projects */}
+        <section className="flex min-h-0 flex-col">
+          <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
+            Active Projects
+          </h2>
+          <div
+            className={cn("grid min-h-0 flex-1 content-start overflow-y-auto", projectCols)}
+            style={{ gap: "var(--tv-gap)" }}
+          >
+            {data.activeProjects.slice(0, sizing.isWide ? 6 : 4).map((project) => (
+              <div
+                key={project.id}
+                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
+                style={{ padding: "var(--tv-card-pad)" }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="tv-body truncate font-semibold">{project.name}</h3>
+                    <p className="tv-small truncate text-muted-foreground">
+                      {project.company?.name}
+                    </p>
                   </div>
-                  <div className="mt-3 flex gap-2">
-                    <StatusBadge status={project.status} />
-                    <PriorityBadge priority={project.priority} />
-                  </div>
+                  <ProgressRing
+                    progress={project.progress}
+                    size={sizing.projectRing}
+                    strokeWidth={sizing.strokeProject}
+                    accentColor={project.company?.color}
+                    percentClassName="text-[length:var(--tv-percent-sm)]"
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="mt-[calc(var(--tv-gap)*0.75)] flex flex-wrap gap-2 [&_*]:text-[length:var(--tv-small)]">
+                  <StatusBadge status={project.status} />
+                  <PriorityBadge priority={project.priority} />
+                </div>
+              </div>
+            ))}
+            {data.activeProjects.length === 0 && (
+              <p className="tv-body text-muted-foreground">No active projects</p>
+            )}
           </div>
+        </section>
 
-          <div>
-            <h2 className="mb-4 text-xl font-semibold uppercase tracking-wider text-muted-foreground">
+        {/* Focus + Wins */}
+        <section
+          className={cn(
+            "flex min-h-0 flex-col",
+            !sizing.isWide && sizing.isCompact === false && "lg:col-span-2"
+          )}
+          style={{ gap: "var(--tv-gap)" }}
+        >
+          <div className="flex min-h-0 flex-1 flex-col">
+            <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
               Current Focus
             </h2>
-            <div className="space-y-2">
-              {data.focusItems.slice(0, 5).map((item) => (
+            <div
+              className="min-h-0 flex-1 space-y-[calc(var(--tv-gap)*0.5)] overflow-y-auto"
+            >
+              {data.focusItems.slice(0, sizing.isCompact ? 3 : 5).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                  className="flex items-center rounded-xl border border-white/10 bg-white/5"
+                  style={{
+                    gap: "calc(var(--tv-gap) * 0.75)",
+                    padding: "calc(var(--tv-card-pad) * 0.75)",
+                  }}
                 >
                   <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: item.company.color }}
+                    className="h-[0.6em] w-[0.6em] shrink-0 rounded-full"
+                    style={{ backgroundColor: item.company.color, fontSize: "var(--tv-body)" }}
                   />
-                  <span className="flex-1 font-medium">{item.title}</span>
-                  <span className="text-sm text-muted-foreground">{item.project.name}</span>
+                  <span className="tv-body min-w-0 flex-1 truncate font-medium">{item.title}</span>
+                  <span className="tv-small shrink-0 text-muted-foreground">{item.project.name}</span>
                 </div>
               ))}
               {data.focusItems.length === 0 && (
-                <p className="text-muted-foreground">All clear — no urgent focus items</p>
+                <p className="tv-body text-muted-foreground">All clear — no urgent focus items</p>
               )}
             </div>
           </div>
 
-          <div>
-            <h2 className="mb-4 text-xl font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
               Recent Wins
             </h2>
-            <div className="space-y-2">
-              {data.recentWins.slice(0, 5).map((log) => (
+            <div className="min-h-0 flex-1 space-y-[calc(var(--tv-gap)*0.5)] overflow-y-auto">
+              {data.recentWins.slice(0, sizing.isCompact ? 3 : 5).map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3"
+                  className="flex items-center rounded-xl border border-emerald-500/20 bg-emerald-500/5"
+                  style={{
+                    gap: "calc(var(--tv-gap) * 0.75)",
+                    padding: "calc(var(--tv-card-pad) * 0.75)",
+                  }}
                 >
-                  <span className="text-emerald-400">✓</span>
-                  <span className="flex-1">{log.title}</span>
-                  <span className="text-sm text-muted-foreground">{log.company?.name}</span>
+                  <span className="tv-body text-emerald-400">✓</span>
+                  <span className="tv-body min-w-0 flex-1 truncate">{log.title}</span>
+                  <span className="tv-small shrink-0 text-muted-foreground">{log.company?.name}</span>
                 </div>
               ))}
             </div>

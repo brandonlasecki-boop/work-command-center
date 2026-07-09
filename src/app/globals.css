@@ -164,6 +164,46 @@
   .animate-note-wiggle {
     animation: note-wiggle 2.5s ease-in-out infinite;
   }
+
+  .tv-mode {
+    --tv-title: clamp(1.75rem, 3.8vmin, 4.5rem);
+    --tv-subtitle: clamp(0.95rem, 1.6vmin, 1.75rem);
+    --tv-heading: clamp(0.85rem, 1.4vmin, 1.35rem);
+    --tv-body: clamp(0.8rem, 1.25vmin, 1.25rem);
+    --tv-small: clamp(0.7rem, 1vmin, 1rem);
+    --tv-stat: clamp(1.75rem, 3.5vmin, 3.5rem);
+    --tv-pad: clamp(0.75rem, 2vmin, 2.5rem);
+    --tv-gap: clamp(0.5rem, 1.5vmin, 1.75rem);
+    --tv-card-pad: clamp(0.75rem, 1.5vmin, 1.5rem);
+    --tv-percent-lg: clamp(1.25rem, 2.5vmin, 2.5rem);
+    --tv-percent-sm: clamp(0.7rem, 1.2vmin, 1rem);
+  }
+
+  .tv-title {
+    font-size: var(--tv-title);
+    line-height: 1.1;
+  }
+
+  .tv-subtitle {
+    font-size: var(--tv-subtitle);
+  }
+
+  .tv-heading {
+    font-size: var(--tv-heading);
+  }
+
+  .tv-body {
+    font-size: var(--tv-body);
+  }
+
+  .tv-small {
+    font-size: var(--tv-small);
+  }
+
+  .tv-stat {
+    font-size: var(--tv-stat);
+    line-height: 1;
+  }
 }
 
 @keyframes pulse-slow {

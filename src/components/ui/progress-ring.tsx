@@ -10,6 +10,7 @@ export function ProgressRing({
   accentColor,
   label,
   large,
+  percentClassName,
 }: {
   progress: number;
   size?: number;
@@ -18,6 +19,7 @@ export function ProgressRing({
   accentColor?: string;
   label?: string;
   large?: boolean;
+  percentClassName?: string;
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -49,7 +51,12 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={cn("font-bold tabular-nums", large ? "text-3xl" : "text-sm")}>
+        <span
+          className={cn(
+            "font-bold tabular-nums",
+            percentClassName ?? (large ? "text-3xl" : "text-sm")
+          )}
+        >
           {Math.round(progress)}%
         </span>
         {label && (
