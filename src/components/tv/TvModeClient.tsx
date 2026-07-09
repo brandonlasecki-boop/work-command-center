@@ -8,13 +8,24 @@ import { MonitorOff } from "lucide-react";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { useTvSizing } from "@/components/tv/useTvSizing";
+import { useTvDisplay } from "@/components/tv/useTvDisplay";
 import type { DashboardSummary } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
 
 export function TvModeClient({ data }: { data: DashboardSummary }) {
   const router = useRouter();
-  const sizing = useTvSizing();
+  const d = useTvDisplay();
+
+  useEffect(() => {
+    document.documentElement.style.height = "100%";
+    document.body.style.height = "100%";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.height = "";
+      document.body.style.height = "";
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => router.refresh(), 30000);
@@ -47,55 +58,88 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
           },
         ];
 
-  const projectCols = sizing.isWide ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-1 sm:grid-cols-2";
-  const mainCols = sizing.isCompact
-    ? "grid-cols-1"
-    : sizing.isWide
-      ? "grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)]"
-      : "grid-cols-1 lg:grid-cols-2";
+  const maxProjects = d.isFireTv ? 4 : d.columns === 3 ? 6 : 4;
+  const maxListItems = d.isFireTv ? 4 : 5;
 
   return (
     <div
-      className="tv-mode relative flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 animate-fade-in"
-      style={{ padding: "var(--tv-pad)", gap: "var(--tv-gap)" }}
+      className={cn(
+        "tv-mode relative flex flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950",
+        d.isFireTv && "fire-tv"
+      )}
+      style={{
+        height: "100vh",
+        padding: d.pad,
+        gap: d.gap,
+        boxSizing: "border-box",
+      }}
     >
-      <div className="absolute right-[var(--tv-pad)] top-[var(--tv-pad)] z-50">
-        <Button
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={<Link href="/dashboard" />}
-          className="border-white/20 bg-black/40 text-[length:var(--tv-small)] backdrop-blur hover:bg-white/10"
-        >
-          <MonitorOff className="mr-2 h-[1.2em] w-[1.2em]" />
-          Exit TV Mode
-        </Button>
-      </div>
-
-      {/* Header */}
-      <header className="flex shrink-0 items-end justify-between gap-4 pr-36">
-        <div className="min-w-0">
-          <h1 className="tv-title font-bold tracking-tight gradient-text">Work Command Center</h1>
-          <p className="tv-subtitle mt-1 text-muted-foreground">
+      {/* Header row ~10% */}
+      <header
+        className="flex shrink-0 items-end justify-between"
+        style={{ gap: d.gap, paddingRight: d.isFireTv ? 0 : 160 }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h1
+            className="font-bold tracking-tight gradient-text"
+            style={{ fontSize: d.title, lineHeight: 1.1 }}
+          >
+            Work Command Center
+          </h1>
+          <p className="text-muted-foreground" style={{ fontSize: d.subtitle, marginTop: 6 }}>
             {format(new Date(), "EEEE, MMMM d, yyyy")}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="tv-stat font-bold tabular-nums">{data.todayLogs.length}</p>
-          <p className="tv-small text-muted-foreground">wins today</p>
+          <p className="font-bold tabular-nums" style={{ fontSize: d.stat, lineHeight: 1 }}>
+            {data.todayLogs.length}
+          </p>
+          <p className="text-muted-foreground" style={{ fontSize: d.small }}>
+            wins today
+          </p>
         </div>
+        {d.isFireTv && (
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+            className="ml-3 shrink-0 border-white/20 bg-black/60 hover:bg-white/10"
+            style={{ fontSize: d.small }}
+          >
+            <MonitorOff className="mr-1 h-[1.1em] w-[1.1em]" />
+            Exit
+          </Button>
+        )}
       </header>
+
+      {!d.isFireTv && (
+        <div className="absolute z-50" style={{ right: d.pad, top: d.pad }}>
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+            className="border-white/20 bg-black/40 hover:bg-white/10"
+            style={{ fontSize: d.small }}
+          >
+            <MonitorOff className="mr-2 h-[1.1em] w-[1.1em]" />
+            Exit TV Mode
+          </Button>
+        </div>
+      )}
 
       {/* Ticker */}
       <div
-        className="shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
-        style={{ paddingBlock: "calc(var(--tv-gap) * 0.6)" }}
+        className="tv-panel shrink-0 overflow-hidden rounded-xl border border-white/10"
+        style={{ padding: `${d.gap * 0.5}px 0` }}
       >
         <div className="animate-marquee flex whitespace-nowrap">
           {tickerItems.map((log, i) => (
             <span
               key={`${log.id}-${i}`}
-              className="mx-[2vw] inline-flex items-center gap-2 tv-body"
+              className="inline-flex items-center"
+              style={{ fontSize: d.body, marginLeft: d.pad, marginRight: d.pad, gap: 8 }}
             >
               <span className="text-emerald-400">✓</span>
               {log.title}
@@ -107,156 +151,166 @@ export function TvModeClient({ data }: { data: DashboardSummary }) {
         </div>
       </div>
 
-      {/* Main dashboard — fills remaining height */}
+      {/* Main — flex row, fills rest of screen */}
       <div
-        className={cn("grid min-h-0 flex-1", mainCols)}
-        style={{ gap: "var(--tv-gap)" }}
+        className="flex min-h-0 flex-1"
+        style={{ gap: d.gap, flexDirection: d.columns === 1 ? "column" : "row" }}
       >
-        {/* Companies */}
-        <section className="flex min-h-0 flex-col">
-          <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
+        {/* Companies column */}
+        <section className="tv-col">
+          <h2
+            className="shrink-0 font-semibold uppercase tracking-wider text-muted-foreground"
+            style={{ fontSize: d.heading, marginBottom: d.gap * 0.6 }}
+          >
             Companies
           </h2>
-          <div
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto"
-            style={{ gap: "var(--tv-gap)" }}
-          >
+          <div className="tv-scroll" style={{ display: "flex", flexDirection: "column", gap: d.gap }}>
             {data.companies.map((company) => (
               <div
                 key={company.id}
-                className="flex shrink-0 items-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
-                style={
-                  {
-                    "--company-accent": company.color,
-                    gap: "var(--tv-gap)",
-                    padding: "var(--tv-card-pad)",
-                  } as React.CSSProperties
-                }
+                className="tv-panel flex shrink-0 items-center rounded-xl border border-white/10"
+                style={{ gap: d.gap, padding: d.cardPad }}
               >
                 <ProgressRing
                   progress={company.progress}
-                  size={sizing.companyRing}
-                  strokeWidth={sizing.strokeCompany}
+                  size={d.companyRing}
+                  strokeWidth={d.strokeCompany}
                   accentColor={company.color}
-                  large
-                  percentClassName="text-[length:var(--tv-percent-lg)]"
+                  percentStyle={{ fontSize: d.percentLg }}
                 />
-                <div className="min-w-0">
-                  <h3 className="tv-body truncate font-bold">{company.name}</h3>
-                  <p className="tv-small text-muted-foreground">
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 className="truncate font-bold" style={{ fontSize: d.body }}>
+                    {company.name}
+                  </h3>
+                  <p className="text-muted-foreground" style={{ fontSize: d.small }}>
                     {company.activeProjectCount} active projects
                   </p>
                 </div>
               </div>
             ))}
-            {data.companies.length === 0 && (
-              <p className="tv-body text-muted-foreground">No companies configured</p>
-            )}
           </div>
         </section>
 
-        {/* Active Projects */}
-        <section className="flex min-h-0 flex-col">
-          <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
+        {/* Projects column */}
+        <section className="tv-col" style={{ flex: d.columns === 3 ? 2 : 1 }}>
+          <h2
+            className="shrink-0 font-semibold uppercase tracking-wider text-muted-foreground"
+            style={{ fontSize: d.heading, marginBottom: d.gap * 0.6 }}
+          >
             Active Projects
           </h2>
           <div
-            className={cn("grid min-h-0 flex-1 content-start overflow-y-auto", projectCols)}
-            style={{ gap: "var(--tv-gap)" }}
+            className="tv-scroll"
+            style={{
+              display: "grid",
+              gridTemplateColumns: d.columns >= 2 ? "1fr 1fr" : "1fr",
+              gap: d.gap,
+              alignContent: "start",
+            }}
           >
-            {data.activeProjects.slice(0, sizing.isWide ? 6 : 4).map((project) => (
+            {data.activeProjects.slice(0, maxProjects).map((project) => (
               <div
                 key={project.id}
-                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
-                style={{ padding: "var(--tv-card-pad)" }}
+                className="tv-panel rounded-xl border border-white/10"
+                style={{ padding: d.cardPad }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="tv-body truncate font-semibold">{project.name}</h3>
-                    <p className="tv-small truncate text-muted-foreground">
+                <div className="flex items-start justify-between" style={{ gap: d.gap * 0.5 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h3 className="truncate font-semibold" style={{ fontSize: d.body }}>
+                      {project.name}
+                    </h3>
+                    <p className="truncate text-muted-foreground" style={{ fontSize: d.small }}>
                       {project.company?.name}
                     </p>
                   </div>
                   <ProgressRing
                     progress={project.progress}
-                    size={sizing.projectRing}
-                    strokeWidth={sizing.strokeProject}
+                    size={d.projectRing}
+                    strokeWidth={d.strokeProject}
                     accentColor={project.company?.color}
-                    percentClassName="text-[length:var(--tv-percent-sm)]"
+                    percentStyle={{ fontSize: d.percentSm }}
                   />
                 </div>
-                <div className="mt-[calc(var(--tv-gap)*0.75)] flex flex-wrap gap-2 [&_*]:text-[length:var(--tv-small)]">
+                <div className="flex flex-wrap" style={{ gap: 8, marginTop: d.gap * 0.6 }}>
                   <StatusBadge status={project.status} />
                   <PriorityBadge priority={project.priority} />
                 </div>
               </div>
             ))}
-            {data.activeProjects.length === 0 && (
-              <p className="tv-body text-muted-foreground">No active projects</p>
-            )}
           </div>
         </section>
 
-        {/* Focus + Wins */}
-        <section
-          className={cn(
-            "flex min-h-0 flex-col",
-            !sizing.isWide && sizing.isCompact === false && "lg:col-span-2"
-          )}
-          style={{ gap: "var(--tv-gap)" }}
-        >
-          <div className="flex min-h-0 flex-1 flex-col">
-            <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
-              Current Focus
-            </h2>
-            <div
-              className="min-h-0 flex-1 space-y-[calc(var(--tv-gap)*0.5)] overflow-y-auto"
-            >
-              {data.focusItems.slice(0, sizing.isCompact ? 3 : 5).map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center rounded-xl border border-white/10 bg-white/5"
-                  style={{
-                    gap: "calc(var(--tv-gap) * 0.75)",
-                    padding: "calc(var(--tv-card-pad) * 0.75)",
-                  }}
-                >
-                  <span
-                    className="h-[0.6em] w-[0.6em] shrink-0 rounded-full"
-                    style={{ backgroundColor: item.company.color, fontSize: "var(--tv-body)" }}
-                  />
-                  <span className="tv-body min-w-0 flex-1 truncate font-medium">{item.title}</span>
-                  <span className="tv-small shrink-0 text-muted-foreground">{item.project.name}</span>
-                </div>
-              ))}
-              {data.focusItems.length === 0 && (
-                <p className="tv-body text-muted-foreground">All clear — no urgent focus items</p>
-              )}
+        {/* Focus + Wins column */}
+        {d.columns >= 2 && (
+          <section className="tv-col" style={{ gap: d.gap }}>
+            <div className="tv-col" style={{ flex: 1 }}>
+              <h2
+                className="shrink-0 font-semibold uppercase tracking-wider text-muted-foreground"
+                style={{ fontSize: d.heading, marginBottom: d.gap * 0.6 }}
+              >
+                Current Focus
+              </h2>
+              <div className="tv-scroll" style={{ display: "flex", flexDirection: "column", gap: d.gap * 0.5 }}>
+                {data.focusItems.slice(0, maxListItems).map((item) => (
+                  <div
+                    key={item.id}
+                    className="tv-panel flex items-center rounded-lg border border-white/10"
+                    style={{ gap: d.gap * 0.6, padding: d.cardPad * 0.75 }}
+                  >
+                    <span
+                      className="shrink-0 rounded-full"
+                      style={{
+                        width: d.body * 0.45,
+                        height: d.body * 0.45,
+                        backgroundColor: item.company.color,
+                      }}
+                    />
+                    <span
+                      className="min-w-0 flex-1 truncate font-medium"
+                      style={{ fontSize: d.body }}
+                    >
+                      {item.title}
+                    </span>
+                    <span
+                      className="shrink-0 text-muted-foreground"
+                      style={{ fontSize: d.small, maxWidth: "35%" }}
+                    >
+                      {item.project.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="flex min-h-0 flex-1 flex-col">
-            <h2 className="tv-heading mb-[calc(var(--tv-gap)*0.75)] shrink-0 font-semibold uppercase tracking-wider text-muted-foreground">
-              Recent Wins
-            </h2>
-            <div className="min-h-0 flex-1 space-y-[calc(var(--tv-gap)*0.5)] overflow-y-auto">
-              {data.recentWins.slice(0, sizing.isCompact ? 3 : 5).map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center rounded-xl border border-emerald-500/20 bg-emerald-500/5"
-                  style={{
-                    gap: "calc(var(--tv-gap) * 0.75)",
-                    padding: "calc(var(--tv-card-pad) * 0.75)",
-                  }}
-                >
-                  <span className="tv-body text-emerald-400">✓</span>
-                  <span className="tv-body min-w-0 flex-1 truncate">{log.title}</span>
-                  <span className="tv-small shrink-0 text-muted-foreground">{log.company?.name}</span>
-                </div>
-              ))}
+            <div className="tv-col" style={{ flex: 1 }}>
+              <h2
+                className="shrink-0 font-semibold uppercase tracking-wider text-muted-foreground"
+                style={{ fontSize: d.heading, marginBottom: d.gap * 0.6 }}
+              >
+                Recent Wins
+              </h2>
+              <div className="tv-scroll" style={{ display: "flex", flexDirection: "column", gap: d.gap * 0.5 }}>
+                {data.recentWins.slice(0, maxListItems).map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex items-center rounded-lg border border-emerald-500/25 bg-emerald-500/10"
+                    style={{ gap: d.gap * 0.6, padding: d.cardPad * 0.75 }}
+                  >
+                    <span className="text-emerald-400" style={{ fontSize: d.body }}>
+                      ✓
+                    </span>
+                    <span className="min-w-0 flex-1 truncate" style={{ fontSize: d.body }}>
+                      {log.title}
+                    </span>
+                    <span className="shrink-0 text-muted-foreground" style={{ fontSize: d.small }}>
+                      {log.company?.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
     </div>
   );

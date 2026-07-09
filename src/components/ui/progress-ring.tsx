@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 export function ProgressRing({
@@ -11,6 +12,7 @@ export function ProgressRing({
   label,
   large,
   percentClassName,
+  percentStyle,
 }: {
   progress: number;
   size?: number;
@@ -20,6 +22,7 @@ export function ProgressRing({
   label?: string;
   large?: boolean;
   percentClassName?: string;
+  percentStyle?: CSSProperties;
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -56,6 +59,7 @@ export function ProgressRing({
             "font-bold tabular-nums",
             percentClassName ?? (large ? "text-3xl" : "text-sm")
           )}
+          style={percentStyle}
         >
           {Math.round(progress)}%
         </span>
