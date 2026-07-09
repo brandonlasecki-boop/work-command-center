@@ -63,3 +63,17 @@ export function TypeBadge({
     </Badge>
   );
 }
+
+export function OngoingSupportBadge({ className }: { className?: string }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "border-cyan-500/30 bg-cyan-500/20 text-[10px] font-semibold uppercase tracking-wider text-cyan-300",
+        className
+      )}
+    >
+      Ongoing Support
+    </Badge>
+  );
+}

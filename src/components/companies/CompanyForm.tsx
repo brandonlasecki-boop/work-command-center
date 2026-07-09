@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,9 +26,22 @@ export function CompanyFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [color, setColor] = useState(company?.color ?? "#6366f1");
+  const [isOngoingSupport, setIsOngoingSupport] = useState(company?.is_ongoing_support ?? false);
+
+  useEffect(() => {
+    if (open) {
+      setColor(company?.color ?? "#6366f1");
+      setIsOngoingSupport(company?.is_ongoing_support ?? false);
+    }
+  }, [open, company]);
 
   async function handleSubmit(formData: FormData) {
     formData.set("color", color);
+    if (isOngoingSupport) {
+      formData.set("is_ongoing_support", "on");
+    } else {
+      formData.delete("is_ongoing_support");
+    }
     if (company) {
       await updateCompanyAction(company.id, formData);
     } else {
@@ -72,6 +85,24 @@ export function CompanyFormDialog({
                   onClick={() => setColor(c)}
                 />
               ))}
+            </div>
+          </div>
+          <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <input
+              type="checkbox"
+              id="is_ongoing_support"
+              name="is_ongoing_support"
+              checked={isOngoingSupport}
+              onChange={(e) => setIsOngoingSupport(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-white/20"
+            />
+            <div>
+              <Label htmlFor="is_ongoing_support" className="cursor-pointer">
+                Ongoing support client
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Enables an Ongoing Support section for IT, devices, email, and recurring help tasks.
+              </p>
             </div>
           </div>
           <Button type="submit" className="w-full">{company ? "Save" : "Create Company"}</Button>

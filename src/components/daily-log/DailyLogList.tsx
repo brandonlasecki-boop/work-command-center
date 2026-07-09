@@ -10,7 +10,15 @@ import { deleteDailyLogAction } from "@/app/actions/daily-logs";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
-export function DailyLogList({ logs }: { logs: DailyLogEnriched[] }) {
+export function DailyLogList({
+  logs,
+  readOnly = false,
+  shareToken,
+}: {
+  logs: DailyLogEnriched[];
+  readOnly?: boolean;
+  shareToken?: string;
+}) {
   if (logs.length === 0) {
     return (
       <GlassCard className="p-8 text-center">
@@ -38,9 +46,9 @@ export function DailyLogList({ logs }: { logs: DailyLogEnriched[] }) {
               {dayLogs.map((log) => (
                 <div key={log.id} className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">
-                    <ActivityFeedItem log={log} />
+                    <ActivityFeedItem log={log} shareToken={shareToken} />
                   </div>
-                  {!log.work_item_id && (
+                  {!readOnly && !log.work_item_id && (
                     <ManualLogDeleteButton logId={log.id} />
                   )}
                 </div>

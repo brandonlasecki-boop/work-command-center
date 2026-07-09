@@ -3,8 +3,7 @@ import { listProjectsByCompany } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
 import { enrichCompaniesWithProgress, enrichProjectsWithProgress } from "@/lib/progress/calculate";
 import { requireShareAccess } from "@/lib/shares/access";
-import { ShareViewBanner } from "@/components/share/ShareViewBanner";
-import { ShareCompanyCard } from "@/components/share/ShareCompanyCard";
+import { CompanyCard } from "@/components/companies/CompanyCard";
 import { GlassCard } from "@/components/ui/glass-card";
 
 export default async function ShareHubPage({
@@ -32,29 +31,27 @@ export default async function ShareHubPage({
   );
 
   return (
-    <div className="min-h-screen">
-      <ShareViewBanner share={share} />
-
-      <div className="animate-fade-in mx-auto w-full min-w-0 max-w-[1920px] space-y-6 p-4 sm:p-6 lg:p-8 xl:p-10">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">Shared companies</h1>
-          <p className="mt-1 text-muted-foreground">
-            Select a company to view its projects and progress.
-          </p>
-        </div>
-
-        {companiesWithProgress.length === 0 ? (
-          <GlassCard className="p-8 text-center text-muted-foreground">
-            No companies are attached to this share link.
-          </GlassCard>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {companiesWithProgress.map((company) => (
-              <ShareCompanyCard key={company.id} company={company} shareToken={token} />
-            ))}
-          </div>
-        )}
+    <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold sm:text-3xl">Companies</h1>
+        <p className="text-muted-foreground">View projects and progress across organizations</p>
       </div>
+
+      {companiesWithProgress.length === 0 ? (
+        <GlassCard className="p-8 text-center text-muted-foreground">
+          No companies are attached to this share link.
+        </GlassCard>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          {companiesWithProgress.map((company) => (
+            <CompanyCard
+              key={company.id}
+              company={company}
+              href={`/share/${token}/company/${company.id}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

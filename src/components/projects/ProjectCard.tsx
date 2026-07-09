@@ -29,12 +29,14 @@ import type { ProjectWithProgress } from "@/lib/types/database";
 export function ProjectCard({
   project,
   companyColor,
+  href,
 }: {
   project: ProjectWithProgress;
   companyColor?: string;
+  href?: string;
 }) {
   return (
-    <Link href={`/project/${project.id}`}>
+    <Link href={href ?? `/project/${project.id}`}>
       <GlassCard className="group p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

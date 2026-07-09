@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ProgressRing } from "@/components/ui/progress-ring";
+import { OngoingSupportBadge } from "@/components/ui/status-badge";
 import { getCompanyInitials } from "@/lib/constants/companies";
 import type { CompanyWithProgress, DailyLogWithRelations } from "@/lib/types/database";
 
@@ -50,11 +51,14 @@ export function CompanyOverviewCard({
               <h3 className="truncate font-semibold group-hover:company-accent-text transition-colors">
                 {company.name}
               </h3>
-              <span
-                className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wider ${status.className}`}
-              >
-                {status.label}
-              </span>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {company.is_ongoing_support && <OngoingSupportBadge />}
+                <span
+                  className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wider ${status.className}`}
+                >
+                  {status.label}
+                </span>
+              </div>
             </div>
           </div>
           <ProgressRing

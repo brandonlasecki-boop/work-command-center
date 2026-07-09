@@ -12,7 +12,6 @@ import { shareIncludesCompany } from "@/lib/data/shares";
 import { ProjectPhaseFilterProvider } from "@/components/projects/ProjectPhaseFilter";
 import { ProjectPhaseBreakdownSection } from "@/components/projects/ProjectPhaseBreakdownSection";
 import { ProjectWorkItemsSection } from "@/components/projects/ProjectWorkItemsSection";
-import { ShareViewBanner } from "@/components/share/ShareViewBanner";
 import { ProjectResourcesPanel } from "@/components/projects/ProjectResourcesPanel";
 import { ProjectDocumentsPanel } from "@/components/projects/ProjectDocumentsPanel";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
@@ -49,10 +48,7 @@ export default async function ShareProjectPage({
 
   return (
     <ProjectPhaseFilterProvider>
-      <div className="min-h-screen">
-        <ShareViewBanner share={share} />
-
-        <div className="animate-fade-in mx-auto w-full min-w-0 max-w-[1920px] space-y-6 p-4 sm:p-6 lg:p-8 xl:p-10">
+      <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <Link href={`/share/${token}/company/${company.id}`}>
@@ -82,13 +78,15 @@ export default async function ShareProjectPage({
               </div>
             </div>
           </div>
-          <ProgressRing
-            progress={progress}
-            size={88}
-            strokeWidth={6}
-            accentColor={company.color}
-            label="progress"
-          />
+          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
+            <ProgressRing
+              progress={progress}
+              size={88}
+              strokeWidth={6}
+              accentColor={company.color}
+              label="progress"
+            />
+          </div>
         </div>
 
         {phases.length > 0 && (
@@ -116,17 +114,16 @@ export default async function ShareProjectPage({
               readOnly
             />
 
-            <ProjectResourcesPanel attachments={projectAttachments} />
+            <ProjectResourcesPanel attachments={projectAttachments} readOnly />
           </div>
           <div className="min-w-0 xl:col-span-4">
             <GlassCard className="p-4 sm:p-6">
               <h2 className="mb-4 text-lg font-semibold">Activity</h2>
-              <DailyLogList logs={recentLogs.slice(0, 8)} />
+              <DailyLogList logs={recentLogs.slice(0, 8)} readOnly shareToken={token} />
             </GlassCard>
           </div>
         </div>
       </div>
-    </div>
     </ProjectPhaseFilterProvider>
   );
 }

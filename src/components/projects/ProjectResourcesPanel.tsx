@@ -12,9 +12,11 @@ function formatFileSize(bytes: number) {
 
 export function ProjectResourcesPanel({
   attachments,
+  readOnly = false,
 }: {
   attachments: ProjectAttachmentRow[];
   projectId?: string;
+  readOnly?: boolean;
 }) {
   return (
     <GlassCard className="p-4 sm:p-6">
@@ -72,9 +74,11 @@ export function ProjectResourcesPanel({
         </div>
       )}
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        Tip: open any task with the pencil icon to upload files to that specific task.
-      </p>
+      {!readOnly && (
+        <p className="mt-4 text-xs text-muted-foreground">
+          Tip: open any task with the pencil icon to upload files to that specific task.
+        </p>
+      )}
     </GlassCard>
   );
 }

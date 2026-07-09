@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { DailyLog, DailyLogEnriched, DailyLogWithRelations, TablesInsert, WorkItem } from "@/lib/types/database";
+import type { DailyLog, DailyLogEnriched, DailyLogType, DailyLogWithRelations, TablesInsert, WorkItem } from "@/lib/types/database";
 import { listAttachmentsByWorkItemIds, groupAttachmentsByWorkItem } from "@/lib/data/attachments";
 
 export type DailyLogFilters = {
@@ -7,6 +7,7 @@ export type DailyLogFilters = {
   projectId?: string;
   fromDate?: string;
   toDate?: string;
+  logType?: DailyLogType;
 };
 
 export async function enrichDailyLogs(logs: DailyLogWithRelations[]): Promise<DailyLogEnriched[]> {
@@ -51,6 +52,7 @@ export async function listDailyLogs(filters: DailyLogFilters = {}): Promise<Dail
   if (filters.projectId) query = query.eq("project_id", filters.projectId);
   if (filters.fromDate) query = query.gte("log_date", filters.fromDate);
   if (filters.toDate) query = query.lte("log_date", filters.toDate);
+  if (filters.logType) query = query.eq("log_type", filters.logType);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -80,8 +82,15 @@ export async function createManualLog(input: TablesInsert<"daily_logs">): Promis
   return data;
 }
 
-export async function deleteDailyLog(id: string): Promise<void> {
+export async function deleteDailyLog(id: string): Promise<string | null> {
   const supabase = await createClient();
+  const { data: log } = await supabase
+    .from("daily_logs")
+    .select("company_id")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase.from("daily_logs").delete().eq("id", id);
   if (error) throw error;
+  return log?.company_id ?? null;
 }

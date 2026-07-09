@@ -18,6 +18,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_ongoing_support: boolean
           logo_url: string | null
           name: string
           updated_at: string
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_ongoing_support?: boolean
           logo_url?: string | null
           name: string
           updated_at?: string
@@ -36,6 +38,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_ongoing_support?: boolean
           logo_url?: string | null
           name?: string
           updated_at?: string
@@ -115,6 +118,7 @@ export type Database = {
           description: string | null
           id: string
           log_date: string
+          log_type: string
           project_id: string | null
           title: string
           work_item_id: string | null
@@ -125,6 +129,7 @@ export type Database = {
           description?: string | null
           id?: string
           log_date?: string
+          log_type?: string
           project_id?: string | null
           title: string
           work_item_id?: string | null
@@ -135,6 +140,7 @@ export type Database = {
           description?: string | null
           id?: string
           log_date?: string
+          log_type?: string
           project_id?: string | null
           title?: string
           work_item_id?: string | null
@@ -431,6 +437,7 @@ export type WorkItem = Tables<"work_items">
 export type WorkItemAttachment = Tables<"work_item_attachments">
 export type ProjectDocument = Tables<"project_documents">
 export type DailyLog = Tables<"daily_logs">
+export type DailyLogType = "general" | "support"
 export type ProjectStatus = Enums<"project_status">
 export type ProjectPriority = Enums<"project_priority">
 export type WorkItemType = Enums<"work_item_type">

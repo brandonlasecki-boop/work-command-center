@@ -10,6 +10,8 @@ import { ProjectCard, ProjectFormDialog } from "@/components/projects/ProjectCar
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { EditCompanyButton, DeleteCompanyButton } from "@/components/companies/CompanyForm";
+import { OngoingSupportSection } from "@/components/companies/OngoingSupportSection";
+import { OngoingSupportBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -30,7 +32,10 @@ export default async function CompanyPage({
   }
   const projectsWithProgress = enrichProjectsWithProgress(projects, workItemsByProject);
   const progress = calcCompanyProgress(projectsWithProgress);
-  const recentLogs = await listDailyLogsEnriched({ companyId: id });
+  const recentLogs = await listDailyLogsEnriched({ companyId: id, logType: "general" });
+  const supportLogs = company.is_ongoing_support
+    ? await listDailyLogsEnriched({ companyId: id, logType: "support" })
+    : [];
 
   return (
     <div
@@ -57,7 +62,10 @@ export default async function CompanyPage({
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold sm:text-3xl">{company.name}</h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold sm:text-3xl">{company.name}</h1>
+                {company.is_ongoing_support && <OngoingSupportBadge />}
+              </div>
               {company.description && (
                 <p className="text-muted-foreground">{company.description}</p>
               )}
@@ -70,6 +78,10 @@ export default async function CompanyPage({
           <DeleteCompanyButton id={company.id} />
         </div>
       </div>
+
+      {company.is_ongoing_support && (
+        <OngoingSupportSection companyId={id} logs={supportLogs} />
+      )}
 
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

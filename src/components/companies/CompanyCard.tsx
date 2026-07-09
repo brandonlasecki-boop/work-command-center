@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ProgressRing } from "@/components/ui/progress-ring";
+import { OngoingSupportBadge } from "@/components/ui/status-badge";
 import type { CompanyWithProgress } from "@/lib/types/database";
 
-export function CompanyCard({ company }: { company: CompanyWithProgress }) {
+export function CompanyCard({
+  company,
+  href,
+}: {
+  company: CompanyWithProgress;
+  href?: string;
+}) {
   return (
-    <Link href={`/company/${company.id}`}>
+    <Link href={href ?? `/company/${company.id}`}>
       <GlassCard
         className="group p-6"
         style={{ "--company-accent": company.color } as React.CSSProperties}
@@ -28,9 +35,12 @@ export function CompanyCard({ company }: { company: CompanyWithProgress }) {
               </div>
             )}
             <div>
-              <h3 className="font-semibold group-hover:company-accent-text transition-colors">
-                {company.name}
-              </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold group-hover:company-accent-text transition-colors">
+                  {company.name}
+                </h3>
+                {company.is_ongoing_support && <OngoingSupportBadge />}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {company.activeProjectCount} active · {company.projectCount} total
               </p>
