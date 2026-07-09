@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import { ProgressWithTrend } from "@/components/ui/progress-with-trend";
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,11 +36,11 @@ export function ProjectCard({
   href?: string;
 }) {
   return (
-    <Link href={href ?? `/project/${project.id}`}>
-      <GlassCard className="group p-5">
-        <div className="flex items-start justify-between gap-3">
+    <Link href={href ?? `/project/${project.id}`} className="block min-w-0">
+      <GlassCard className="group overflow-hidden p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold group-hover:text-indigo-300 transition-colors">
+            <h3 className="truncate font-semibold transition-colors group-hover:text-indigo-300">
               {project.name}
             </h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -48,15 +48,21 @@ export function ProjectCard({
               <PriorityBadge priority={project.priority} />
             </div>
           </div>
-          <ProgressRing
+          <ProgressWithTrend
             progress={project.progress}
+            deltas={project.progressDeltas}
             size={52}
             strokeWidth={4}
             accentColor={companyColor}
+            compactDeltas
+            align="start"
+            className="sm:items-end"
           />
         </div>
         {project.description && (
-          <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
+          <p className="mt-3 line-clamp-2 break-words text-sm text-muted-foreground">
+            {project.description}
+          </p>
         )}
       </GlassCard>
     </Link>

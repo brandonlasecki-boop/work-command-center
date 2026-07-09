@@ -7,7 +7,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ActivityFeedItem } from "@/components/daily-log/ActivityFeedItem";
 import type { DailyLogEnriched } from "@/lib/types/database";
 
-export function RecentActivityPanel({ logs }: { logs: DailyLogEnriched[] }) {
+export function RecentActivityPanel({
+  logs,
+  shareToken,
+  readOnly = false,
+}: {
+  logs: DailyLogEnriched[];
+  shareToken?: string;
+  readOnly?: boolean;
+}) {
   return (
     <GlassCard className="flex h-full flex-col p-5">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -20,19 +28,21 @@ export function RecentActivityPanel({ logs }: { logs: DailyLogEnriched[] }) {
         <TooltipProvider delay={150}>
           <div className="flex-1 space-y-2">
             {logs.slice(0, 8).map((log) => (
-              <ActivityFeedItem key={log.id} log={log} />
+              <ActivityFeedItem key={log.id} log={log} shareToken={shareToken} />
             ))}
           </div>
         </TooltipProvider>
       )}
 
-      <Link
-        href="/daily-log"
-        className="mt-4 flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
-      >
-        View Full Activity Feed
-        <ChevronRight className="h-4 w-4" />
-      </Link>
+      {!readOnly && (
+        <Link
+          href="/daily-log"
+          className="mt-4 flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
+        >
+          View Full Activity Feed
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      )}
     </GlassCard>
   );
 }

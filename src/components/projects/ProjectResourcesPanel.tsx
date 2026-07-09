@@ -19,7 +19,7 @@ export function ProjectResourcesPanel({
   readOnly?: boolean;
 }) {
   return (
-    <GlassCard className="p-4 sm:p-6">
+    <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <FolderOpen className="mt-0.5 h-5 w-5 shrink-0 text-indigo-300" />

@@ -5,10 +5,10 @@ import { getCompany } from "@/lib/data/companies";
 import { listProjectsByCompany } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
 import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
-import { enrichProjectsWithProgress, calcCompanyProgress } from "@/lib/progress/calculate";
+import { enrichProjectsWithProgress, calcCompanyProgress, calcCompanyProgressDeltas } from "@/lib/progress/calculate";
 import { ProjectCard, ProjectFormDialog } from "@/components/projects/ProjectCard";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import { ProgressWithTrend } from "@/components/ui/progress-with-trend";
 import { EditCompanyButton, DeleteCompanyButton } from "@/components/companies/CompanyForm";
 import { OngoingSupportSection } from "@/components/companies/OngoingSupportSection";
 import { OngoingSupportBadge } from "@/components/ui/status-badge";
@@ -32,6 +32,7 @@ export default async function CompanyPage({
   }
   const projectsWithProgress = enrichProjectsWithProgress(projects, workItemsByProject);
   const progress = calcCompanyProgress(projectsWithProgress);
+  const progressDeltas = calcCompanyProgressDeltas(projectsWithProgress, workItemsByProject);
   const recentLogs = await listDailyLogsEnriched({ companyId: id, logType: "general" });
   const supportLogs = company.is_ongoing_support
     ? await listDailyLogsEnriched({ companyId: id, logType: "support" })
@@ -63,17 +64,24 @@ export default async function CompanyPage({
             )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold sm:text-3xl">{company.name}</h1>
+                <h1 className="break-words text-2xl font-bold sm:text-3xl">{company.name}</h1>
                 {company.is_ongoing_support && <OngoingSupportBadge />}
               </div>
               {company.description && (
-                <p className="text-muted-foreground">{company.description}</p>
+                <p className="break-words text-muted-foreground">{company.description}</p>
               )}
             </div>
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
-          <ProgressRing progress={progress} size={72} strokeWidth={5} accentColor={company.color} />
+          <ProgressWithTrend
+            progress={progress}
+            deltas={progressDeltas}
+            size={72}
+            strokeWidth={5}
+            accentColor={company.color}
+            align="end"
+          />
           <EditCompanyButton company={company} />
           <DeleteCompanyButton id={company.id} />
         </div>
@@ -100,7 +108,7 @@ export default async function CompanyPage({
             No projects yet. Create one to start tracking work.
           </GlassCard>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 [&>*]:min-w-0">
             {projectsWithProgress.map((project) => (
               <ProjectCard key={project.id} project={project} companyColor={company.color} />
             ))}

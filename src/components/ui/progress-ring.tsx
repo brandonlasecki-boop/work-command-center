@@ -30,7 +30,7 @@ export function ProgressRing({
   const color = accentColor ?? "oklch(0.65 0.2 280)";
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)}>
+    <div className={cn("relative inline-flex shrink-0 items-center justify-center", className)}>
       <svg width={size} height={size} className="-rotate-90 animate-pulse-slow">
         <circle
           cx={size / 2}

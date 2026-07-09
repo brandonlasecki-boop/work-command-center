@@ -23,7 +23,7 @@ export function PhaseBreakdown({
   if (phases.length === 0) return null;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&>*]:min-w-0">
       {phases.map((phase) => {
         const tasks = phase.children.filter((c) => c.type === "task");
         const completedTasks = tasks.filter((t) => t.status === "completed").length;
@@ -43,7 +43,7 @@ export function PhaseBreakdown({
             onClick={() => onPhaseSelect?.(phase.id)}
             aria-pressed={isSelected}
             className={cn(
-              "rounded-2xl border bg-white/5 p-4 text-left backdrop-blur transition-all",
+              "min-w-0 rounded-2xl border bg-white/5 p-4 text-left backdrop-blur transition-all",
               isInteractive && "cursor-pointer hover:border-white/20 hover:bg-white/[0.08]",
               isSelected
                 ? "border-indigo-400/70 bg-indigo-500/10 ring-2 ring-indigo-400/50 shadow-[0_0_24px_rgba(99,102,241,0.2)]"
@@ -63,7 +63,7 @@ export function PhaseBreakdown({
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {phaseWeight}% weight
                 </p>
-                <h3 className="mt-1 text-sm font-semibold leading-snug">{phase.title}</h3>
+                <h3 className="mt-1 break-words text-sm font-semibold leading-snug">{phase.title}</h3>
                 <StatusBadge status={phase.derivedStatus} className="mt-2" />
               </div>
               <ProgressRing

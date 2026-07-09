@@ -9,13 +9,39 @@ import {
 } from "@/lib/progress/calculate";
 import type { DashboardSummary } from "@/lib/types/database";
 
-export async function getDashboardSummary(): Promise<DashboardSummary> {
-  const [companies, projects, workItems, todayLogs] = await Promise.all([
+type DashboardSummaryOptions = {
+  companyIds?: string[];
+};
+
+export async function getShareDashboardSummary(companyIds: string[]): Promise<DashboardSummary> {
+  return getDashboardSummary({ companyIds });
+}
+
+export async function getDashboardSummary(
+  options: DashboardSummaryOptions = {}
+): Promise<DashboardSummary> {
+  const companyIdSet = options.companyIds?.length ? new Set(options.companyIds) : null;
+
+  const [allCompanies, allProjects, allWorkItems, allTodayLogs] = await Promise.all([
     listCompanies(),
     listProjects(),
     listAllWorkItems(),
     listTodayLogs(),
   ]);
+
+  const companies = companyIdSet
+    ? allCompanies.filter((company) => companyIdSet.has(company.id))
+    : allCompanies;
+  const projects = companyIdSet
+    ? allProjects.filter((project) => companyIdSet.has(project.company_id))
+    : allProjects;
+  const projectIds = new Set(projects.map((project) => project.id));
+  const workItems = companyIdSet
+    ? allWorkItems.filter((item) => projectIds.has(item.project_id))
+    : allWorkItems;
+  const todayLogs = companyIdSet
+    ? allTodayLogs.filter((log) => companyIdSet.has(log.company_id))
+    : allTodayLogs;
 
   const workItemsByProject = new Map<string, typeof workItems>();
   for (const item of workItems) {
@@ -31,7 +57,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     })
   );
 
-  const companiesWithProgress = enrichCompaniesWithProgress(companies, projectsWithProgress);
+  const companiesWithProgress = enrichCompaniesWithProgress(
+    companies,
+    projectsWithProgress,
+    workItemsByProject
+  );
 
   const activeProjects = sortByPriority(
     projectsWithProgress.filter(
@@ -50,7 +80,10 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     .slice(0, 8);
 
   const recentWinsRaw = await listDailyLogs({});
-  const recentWins = await enrichDailyLogs(recentWinsRaw.slice(0, 10));
+  const scopedRecentWins = companyIdSet
+    ? recentWinsRaw.filter((log) => companyIdSet.has(log.company_id))
+    : recentWinsRaw;
+  const recentWins = await enrichDailyLogs(scopedRecentWins.slice(0, 10));
 
   const today = new Date().toISOString().split("T")[0];
   const tasksCompletedToday = workItems.filter(

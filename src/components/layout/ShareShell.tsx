@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Eye, Menu, X } from "lucide-react";
+import { Building2, Eye, LayoutDashboard, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/lib/types/database";
@@ -22,7 +22,7 @@ function ShareSidebarNav({
   onNavigate?: () => void;
 }) {
   const shareBase = `/share/${token}`;
-  const showHubLink = companies.length > 1;
+  const isDashboard = pathname === shareBase;
 
   return (
     <>
@@ -36,20 +36,23 @@ function ShareSidebarNav({
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Shared with {viewerName}
         </p>
-        {showHubLink && (
-          <Link
-            href={shareBase}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-              pathname === shareBase
-                ? "bg-white/10 text-white"
-                : "text-muted-foreground hover:bg-white/5 hover:text-white"
-            )}
-          >
-            <Building2 className="h-4 w-4" />
-            All companies
-          </Link>
+        <Link
+          href={shareBase}
+          onClick={onNavigate}
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+            isDashboard
+              ? "bg-white/10 text-white"
+              : "text-muted-foreground hover:bg-white/5 hover:text-white"
+          )}
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          Dashboard
+        </Link>
+        {companies.length > 1 && (
+          <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Companies
+          </p>
         )}
         {companies.map((company) => {
           const href = `${shareBase}/company/${company.id}`;

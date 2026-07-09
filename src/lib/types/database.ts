@@ -457,16 +457,24 @@ export type WorkItemNode = WorkItem & {
   derivedStatus: WorkItemStatus
 }
 
+export type ProgressDeltas = {
+  day: number;
+  week: number;
+  month: number;
+};
+
 export type ProjectWithProgress = Project & {
-  progress: number
-  company?: Company
-}
+  progress: number;
+  progressDeltas?: ProgressDeltas;
+  company?: Company;
+};
 
 export type CompanyWithProgress = Company & {
-  progress: number
-  projectCount: number
-  activeProjectCount: number
-}
+  progress: number;
+  progressDeltas?: ProgressDeltas;
+  projectCount: number;
+  activeProjectCount: number;
+};
 
 export type CompanyShareWithCompanies = CompanyShare & {
   companies: Company[]

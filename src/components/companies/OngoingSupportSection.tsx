@@ -28,7 +28,7 @@ export function OngoingSupportSection({
 
   return (
     <section>
-      <GlassCard className="p-4 sm:p-6">
+      <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
         <div className="mb-6 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20">
             <Headphones className="h-5 w-5 text-cyan-300" />

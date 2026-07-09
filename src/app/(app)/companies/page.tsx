@@ -20,7 +20,7 @@ export default async function CompaniesPage() {
       {companies.length === 0 ? (
         <EmptyCompanies />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 [&>*]:min-w-0">
           {companies.map((company) => (
             <CompanyCard key={company.id} company={company} />
           ))}

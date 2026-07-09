@@ -3,13 +3,13 @@ import { ArrowLeft } from "lucide-react";
 import { listProjectsByCompany } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
 import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
-import { enrichProjectsWithProgress, calcCompanyProgress } from "@/lib/progress/calculate";
+import { enrichProjectsWithProgress, calcCompanyProgress, calcCompanyProgressDeltas } from "@/lib/progress/calculate";
 import { requireShareCompanyAccess } from "@/lib/shares/access";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { OngoingSupportSection } from "@/components/companies/OngoingSupportSection";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
 import { OngoingSupportBadge } from "@/components/ui/status-badge";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import { ProgressWithTrend } from "@/components/ui/progress-with-trend";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +30,7 @@ export default async function ShareCompanyPage({
   }
   const projectsWithProgress = enrichProjectsWithProgress(projects, workItemsByProject);
   const progress = calcCompanyProgress(projectsWithProgress);
+  const progressDeltas = calcCompanyProgressDeltas(projectsWithProgress, workItemsByProject);
   const recentLogs = await listDailyLogsEnriched({ companyId: company.id, logType: "general" });
   const supportLogs = company.is_ongoing_support
     ? await listDailyLogsEnriched({ companyId: company.id, logType: "support" })
@@ -68,17 +69,24 @@ export default async function ShareCompanyPage({
             )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold sm:text-3xl">{company.name}</h1>
+                <h1 className="break-words text-2xl font-bold sm:text-3xl">{company.name}</h1>
                 {company.is_ongoing_support && <OngoingSupportBadge />}
               </div>
               {company.description && (
-                <p className="text-muted-foreground">{company.description}</p>
+                <p className="break-words text-muted-foreground">{company.description}</p>
               )}
             </div>
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
-          <ProgressRing progress={progress} size={72} strokeWidth={5} accentColor={company.color} />
+          <ProgressWithTrend
+            progress={progress}
+            deltas={progressDeltas}
+            size={72}
+            strokeWidth={5}
+            accentColor={company.color}
+            align="end"
+          />
         </div>
       </div>
 
@@ -98,7 +106,7 @@ export default async function ShareCompanyPage({
             No projects to show yet.
           </GlassCard>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 [&>*]:min-w-0">
             {projectsWithProgress.map((project) => (
               <ProjectCard
                 key={project.id}

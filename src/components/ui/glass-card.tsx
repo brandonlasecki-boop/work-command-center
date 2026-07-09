@@ -10,7 +10,7 @@ export function GlassCard({
   style?: React.CSSProperties;
 }) {
   return (
-    <div className={cn("glass-card glass-card-hover", className)} style={style}>
+    <div className={cn("glass-card glass-card-hover min-w-0", className)} style={style}>
       {children}
     </div>
   );

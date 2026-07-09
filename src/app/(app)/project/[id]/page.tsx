@@ -6,11 +6,11 @@ import { getCompany } from "@/lib/data/companies";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
 import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
 import { listProjectDocuments } from "@/lib/data/project-documents";
-import { calcProjectProgress, buildTree } from "@/lib/progress/calculate";
+import { calcProjectProgress, buildTree, calcProjectProgressDeltas } from "@/lib/progress/calculate";
 import { ProjectPhaseFilterProvider } from "@/components/projects/ProjectPhaseFilter";
 import { ProjectPhaseBreakdownSection } from "@/components/projects/ProjectPhaseBreakdownSection";
 import { ProjectWorkItemsSection } from "@/components/projects/ProjectWorkItemsSection";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import { ProgressWithTrend } from "@/components/ui/progress-with-trend";
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { EditProjectButton, DeleteProjectButton } from "@/components/projects/ProjectCard";
 import { listProjectAttachmentsWithTasks, groupAttachmentsByWorkItem } from "@/lib/data/attachments";
@@ -33,6 +33,7 @@ export default async function ProjectPage({
   const company = await getCompany(project.company_id);
   const workItems = await listWorkItemsByProject(id);
   const progress = calcProjectProgress(project, workItems);
+  const progressDeltas = calcProjectProgressDeltas(project, workItems, progress);
   const phases = buildTree(workItems).filter((n) => n.type === "phase");
   const taskCount = workItems.filter((w) => w.type === "task").length;
   const completedTasks = workItems.filter((w) => w.type === "task" && w.status === "completed").length;
@@ -55,9 +56,9 @@ export default async function ProjectPage({
           </Link>
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{company?.name}</p>
-            <h1 className="text-2xl font-bold sm:text-3xl">{project.name}</h1>
+            <h1 className="break-words text-2xl font-bold sm:text-3xl">{project.name}</h1>
             {project.description && (
-              <p className="mt-1 text-muted-foreground">{project.description}</p>
+              <p className="mt-1 break-words text-muted-foreground">{project.description}</p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               <StatusBadge status={project.status} />
@@ -76,12 +77,15 @@ export default async function ProjectPage({
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
-          <ProgressRing
+          <ProgressWithTrend
             progress={progress}
+            deltas={progressDeltas}
             size={88}
             strokeWidth={6}
             accentColor={company?.color}
             label="progress"
+            align="start"
+            className="sm:items-end"
           />
           <EditProjectButton project={{ ...project, progress }} companyId={project.company_id} />
           <DeleteProjectButton projectId={project.id} companyId={project.company_id} />

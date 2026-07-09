@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import { ProgressWithTrend } from "@/components/ui/progress-with-trend";
 import { OngoingSupportBadge } from "@/components/ui/status-badge";
 import type { CompanyWithProgress } from "@/lib/types/database";
 
@@ -12,31 +12,31 @@ export function CompanyCard({
   href?: string;
 }) {
   return (
-    <Link href={href ?? `/company/${company.id}`}>
+    <Link href={href ?? `/company/${company.id}`} className="block min-w-0">
       <GlassCard
-        className="group p-6"
+        className="group overflow-hidden p-4 sm:p-6"
         style={{ "--company-accent": company.color } as React.CSSProperties}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             {company.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={company.logo_url}
                 alt={company.name}
-                className="h-10 w-10 rounded-xl object-cover"
+                className="h-10 w-10 shrink-0 rounded-xl object-cover"
               />
             ) : (
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
                 style={{ backgroundColor: company.color }}
               >
                 {company.name.charAt(0)}
               </div>
             )}
-            <div>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold group-hover:company-accent-text transition-colors">
+                <h3 className="truncate font-semibold transition-colors group-hover:company-accent-text">
                   {company.name}
                 </h3>
                 {company.is_ongoing_support && <OngoingSupportBadge />}
@@ -46,10 +46,21 @@ export function CompanyCard({
               </p>
             </div>
           </div>
-          <ProgressRing progress={company.progress} size={56} strokeWidth={4} accentColor={company.color} />
+          <ProgressWithTrend
+            progress={company.progress}
+            deltas={company.progressDeltas}
+            size={56}
+            strokeWidth={4}
+            accentColor={company.color}
+            compactDeltas
+            align="start"
+            className="sm:items-end"
+          />
         </div>
         {company.description && (
-          <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{company.description}</p>
+          <p className="mt-3 line-clamp-2 break-words text-sm text-muted-foreground">
+            {company.description}
+          </p>
         )}
       </GlassCard>
     </Link>

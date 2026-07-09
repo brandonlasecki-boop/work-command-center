@@ -19,14 +19,18 @@ export function DashboardSidebar({
   activeProjects,
   focusItems,
   todayStats,
+  shareToken,
 }: {
   companies: CompanyWithProgress[];
   activeProjects: ProjectWithProgress[];
   focusItems: FocusItem[];
   todayStats: DashboardTodayStats;
+  shareToken?: string;
 }) {
   const topProject = activeProjects[0];
   const upNext = focusItems.slice(0, 4);
+  const projectHref = (projectId: string) =>
+    shareToken ? `/share/${shareToken}/project/${projectId}` : `/project/${projectId}`;
 
   return (
     <div className="space-y-4">
@@ -36,7 +40,7 @@ export function DashboardSidebar({
         </h2>
 
         {topProject ? (
-          <Link href={`/project/${topProject.id}`} className="block">
+          <Link href={projectHref(topProject.id)} className="block">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-300">
                 Top Priority
@@ -63,7 +67,7 @@ export function DashboardSidebar({
             </p>
             <div className="space-y-2">
               {upNext.map((item) => (
-                <Link key={item.id} href={`/project/${item.project.id}`}>
+                <Link key={item.id} href={projectHref(item.project.id)}>
                   <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-white/5">
                     <span
                       className="h-2 w-2 shrink-0 rounded-full"

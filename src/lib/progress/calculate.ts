@@ -5,7 +5,9 @@ import type {
   Project,
   ProjectWithProgress,
   CompanyWithProgress,
+  ProgressDeltas,
 } from "@/lib/types/database";
+import { startOfDay, startOfMonth, subDays } from "date-fns";
 
 export function calcDerivedStatusFromLeaves(
   leaves: Pick<WorkItem, "status">[]
@@ -143,28 +145,108 @@ export function calcCompanyProgress(
   return Math.round(active.reduce((s, p) => s + p.progress, 0) / active.length);
 }
 
+function roundDelta(value: number): number {
+  const rounded = Math.round(value * 10) / 10;
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+function workItemsAsOf(items: WorkItem[], asOf: Date): WorkItem[] {
+  return items.map((item) => {
+    if (item.status !== "completed") return item;
+    if (!item.completed_at) return item;
+    if (new Date(item.completed_at) <= asOf) return item;
+    return { ...item, status: "in_progress" as const, completed_at: null };
+  });
+}
+
+export function calcProjectProgressAsOf(
+  project: Pick<Project, "manual_progress_override">,
+  items: WorkItem[],
+  asOf: Date
+): number {
+  if (project.manual_progress_override != null) {
+    return Math.min(100, Math.max(0, Number(project.manual_progress_override)));
+  }
+  return calcProjectProgress(project, workItemsAsOf(items, asOf));
+}
+
+export function calcProjectProgressDeltas(
+  project: Pick<Project, "manual_progress_override">,
+  items: WorkItem[],
+  currentProgress?: number
+): ProgressDeltas {
+  if (project.manual_progress_override != null) {
+    return { day: 0, week: 0, month: 0 };
+  }
+
+  const current = currentProgress ?? calcProjectProgress(project, items);
+  const now = new Date();
+  const atDayStart = calcProjectProgressAsOf(project, items, startOfDay(now));
+  const atWeekStart = calcProjectProgressAsOf(project, items, startOfDay(subDays(now, 7)));
+  const atMonthStart = calcProjectProgressAsOf(project, items, startOfMonth(now));
+
+  return {
+    day: roundDelta(current - atDayStart),
+    week: roundDelta(current - atWeekStart),
+    month: roundDelta(current - atMonthStart),
+  };
+}
+
+export function calcCompanyProgressDeltas(
+  projects: ProjectWithProgress[],
+  workItemsByProject: Map<string, WorkItem[]>
+): ProgressDeltas {
+  const now = new Date();
+  const current = calcCompanyProgress(projects);
+
+  function companyProgressAt(asOf: Date): number {
+    const projectsAtTime = projects.map((project) => ({
+      ...project,
+      progress: calcProjectProgressAsOf(
+        project,
+        workItemsByProject.get(project.id) ?? [],
+        asOf
+      ),
+    }));
+    return calcCompanyProgress(projectsAtTime);
+  }
+
+  return {
+    day: roundDelta(current - companyProgressAt(startOfDay(now))),
+    week: roundDelta(current - companyProgressAt(startOfDay(subDays(now, 7)))),
+    month: roundDelta(current - companyProgressAt(startOfMonth(now))),
+  };
+}
+
 export function enrichProjectsWithProgress(
   projects: Project[],
   workItemsByProject: Map<string, WorkItem[]>
 ): ProjectWithProgress[] {
-  return projects.map((project) => ({
-    ...project,
-    progress: calcProjectProgress(
-      project,
-      workItemsByProject.get(project.id) ?? []
-    ),
-  }));
+  return projects.map((project) => {
+    const items = workItemsByProject.get(project.id) ?? [];
+    const progress = calcProjectProgress(project, items);
+    return {
+      ...project,
+      progress,
+      progressDeltas: calcProjectProgressDeltas(project, items, progress),
+    };
+  });
 }
 
 export function enrichCompaniesWithProgress(
   companies: import("@/lib/types/database").Company[],
-  projects: ProjectWithProgress[]
+  projects: ProjectWithProgress[],
+  workItemsByProject?: Map<string, WorkItem[]>
 ): CompanyWithProgress[] {
   return companies.map((company) => {
     const companyProjects = projects.filter((p) => p.company_id === company.id);
+    const progressDeltas: ProgressDeltas | undefined = workItemsByProject
+      ? calcCompanyProgressDeltas(companyProjects, workItemsByProject)
+      : undefined;
     return {
       ...company,
       progress: calcCompanyProgress(companyProjects),
+      progressDeltas,
       projectCount: companyProjects.length,
       activeProjectCount: companyProjects.filter(
         (p) => p.status === "in_progress" || p.status === "not_started"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import { ProgressWithTrend } from "@/components/ui/progress-with-trend";
 import { OngoingSupportBadge } from "@/components/ui/status-badge";
 import { getCompanyInitials } from "@/lib/constants/companies";
 import type { CompanyWithProgress, DailyLogWithRelations } from "@/lib/types/database";
@@ -13,35 +13,40 @@ function getCompanyStatus(progress: number) {
 export function CompanyOverviewCard({
   company,
   todayLogs,
+  shareToken,
 }: {
   company: CompanyWithProgress;
   todayLogs: DailyLogWithRelations[];
+  shareToken?: string;
 }) {
   const status = getCompanyStatus(company.progress);
   const tasksToday = todayLogs.filter((log) => log.company_id === company.id).length;
+  const href = shareToken
+    ? `/share/${shareToken}/company/${company.id}`
+    : `/company/${company.id}`;
 
   return (
-    <Link href={`/company/${company.id}`}>
+    <Link href={href} className="block min-w-0">
       <GlassCard
-        className="group relative overflow-hidden p-5"
+        className="group relative overflow-hidden p-4 sm:p-5"
         style={{ "--company-accent": company.color } as React.CSSProperties}
       >
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-60"
           style={{ background: `linear-gradient(90deg, transparent, ${company.color}, transparent)` }}
         />
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             {company.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={company.logo_url}
                 alt={company.name}
-                className="h-10 w-10 rounded-xl object-cover ring-1 ring-white/10"
+                className="h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-white/10"
               />
             ) : (
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold text-white ring-1 ring-white/10"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white ring-1 ring-white/10"
                 style={{ backgroundColor: company.color }}
               >
                 {getCompanyInitials(company.name)}
@@ -61,12 +66,15 @@ export function CompanyOverviewCard({
               </div>
             </div>
           </div>
-          <ProgressRing
+          <ProgressWithTrend
             progress={company.progress}
+            deltas={company.progressDeltas}
             size={72}
             strokeWidth={5}
             accentColor={company.color}
             large
+            align="start"
+            className="sm:items-end"
           />
         </div>
 
@@ -85,11 +93,24 @@ export function CompanyOverviewCard({
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>{company.projectCount} total projects</span>
-          <span className="font-medium" style={{ color: company.color }}>
-            {company.progress}% complete
-          </span>
+          {company.progressDeltas && company.progressDeltas.month !== 0 ? (
+            <span
+              className={
+                company.progressDeltas.month > 0
+                  ? "font-medium text-violet-300"
+                  : "font-medium text-red-300"
+              }
+            >
+              {company.progressDeltas.month > 0 ? "+" : ""}
+              {company.progressDeltas.month}% this month
+            </span>
+          ) : (
+            <span className="font-medium" style={{ color: company.color }}>
+              {company.progress}% complete
+            </span>
+          )}
         </div>
       </GlassCard>
     </Link>
