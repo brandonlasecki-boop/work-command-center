@@ -9,7 +9,7 @@ export const viewport: Viewport = {
 
 export default function TvLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="tv-root h-full w-full overflow-hidden bg-slate-950">
+    <div className="fixed inset-0 overflow-hidden bg-slate-950">
       {children}
     </div>
   );

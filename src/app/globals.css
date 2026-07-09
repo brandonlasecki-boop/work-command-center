@@ -179,36 +179,12 @@
     box-sizing: border-box;
   }
 
-  .tv-root,
-  .tv-root body {
-    height: 100%;
-    overflow: hidden;
+  .tv-canvas {
+    box-sizing: border-box;
   }
 
-  .tv-mode.fire-tv {
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .tv-mode.fire-tv .tv-panel {
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  .tv-mode.fire-tv .animate-pulse-slow {
+  .tv-canvas .animate-pulse-slow {
     animation: none;
-  }
-
-  .tv-col {
-    flex: 1 1 0;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .tv-scroll {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
   }
 }
 
