@@ -8,7 +8,10 @@ import {
   CalendarDays,
   Monitor,
   Shield,
+  LogOut,
 } from "lucide-react";
+import { logoutAction } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -51,6 +54,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
+        <div className="border-t border-white/10 p-3">
+          <form action={logoutAction}>
+            <Button
+              type="submit"
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-white"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </Button>
+          </form>
+        </div>
       </aside>
       <main className="ml-64 flex-1 p-8">{children}</main>
     </div>
