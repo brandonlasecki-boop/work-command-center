@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getProject } from "@/lib/data/projects";
 import { listWorkItemsByProject } from "@/lib/data/work-items";
 import { listDailyLogsEnriched } from "@/lib/data/daily-logs";
+import { listProjectDocuments } from "@/lib/data/project-documents";
 import { listProjectAttachmentsWithTasks, groupAttachmentsByWorkItem } from "@/lib/data/attachments";
 import { calcProjectProgress, buildTree } from "@/lib/progress/calculate";
 import { requireShareAccess } from "@/lib/shares/access";
@@ -11,6 +12,7 @@ import { ShareViewBanner } from "@/components/share/ShareViewBanner";
 import { WorkItemTree } from "@/components/work-items/WorkItemTree";
 import { PhaseBreakdown } from "@/components/projects/PhaseBreakdown";
 import { ProjectResourcesPanel } from "@/components/projects/ProjectResourcesPanel";
+import { ProjectDocumentsPanel } from "@/components/projects/ProjectDocumentsPanel";
 import { DailyLogList } from "@/components/daily-log/DailyLogList";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
@@ -35,25 +37,28 @@ export default async function ShareProjectPage({
   const phases = buildTree(workItems).filter((n) => n.type === "phase");
   const taskCount = workItems.filter((w) => w.type === "task").length;
   const completedTasks = workItems.filter((w) => w.type === "task" && w.status === "completed").length;
-  const recentLogs = await listDailyLogsEnriched({ projectId });
-  const projectAttachments = await listProjectAttachmentsWithTasks(projectId);
+  const [recentLogs, projectAttachments, projectDocuments] = await Promise.all([
+    listDailyLogsEnriched({ projectId }),
+    listProjectAttachmentsWithTasks(projectId),
+    listProjectDocuments(projectId),
+  ]);
   const attachmentsByWorkItem = groupAttachmentsByWorkItem(projectAttachments);
 
   return (
     <div className="min-h-screen">
       <ShareViewBanner share={share} />
 
-      <div className="animate-fade-in mx-auto max-w-6xl space-y-8 p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
+      <div className="animate-fade-in mx-auto w-full min-w-0 max-w-[1920px] space-y-6 p-4 sm:p-6 lg:p-8 xl:p-10">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <Link href={`/share/${token}`}>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="shrink-0">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground">{company.name}</p>
-              <h1 className="text-3xl font-bold">{project.name}</h1>
+              <h1 className="text-2xl font-bold sm:text-3xl">{project.name}</h1>
               {project.description && (
                 <p className="mt-1 text-muted-foreground">{project.description}</p>
               )}
@@ -84,7 +89,7 @@ export default async function ShareProjectPage({
 
         {phases.length > 0 && (
           <section>
-            <div className="mb-4 flex items-end justify-between">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold">Phase Breakdown</h2>
                 <p className="text-sm text-muted-foreground">
@@ -97,9 +102,9 @@ export default async function ShareProjectPage({
           </section>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-8">
-            <GlassCard className="p-6">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-12 xl:gap-8">
+          <div className="min-w-0 space-y-6 xl:col-span-8">
+            <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
               <h2 className="mb-4 text-lg font-semibold">Work Items</h2>
               <WorkItemTree
                 items={workItems}
@@ -109,10 +114,16 @@ export default async function ShareProjectPage({
               />
             </GlassCard>
 
+            <ProjectDocumentsPanel
+              projectId={projectId}
+              documents={projectDocuments}
+              readOnly
+            />
+
             <ProjectResourcesPanel attachments={projectAttachments} />
           </div>
-          <div>
-            <GlassCard className="p-6">
+          <div className="min-w-0 xl:col-span-4">
+            <GlassCard className="p-4 sm:p-6">
               <h2 className="mb-4 text-lg font-semibold">Activity</h2>
               <DailyLogList logs={recentLogs.slice(0, 8)} />
             </GlassCard>

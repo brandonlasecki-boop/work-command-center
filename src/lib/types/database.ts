@@ -249,6 +249,57 @@ export type Database = {
           },
         ]
       }
+      project_documents: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number
+          id: string
+          mime_type: string | null
+          project_id: string
+          storage_path: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size?: number
+          id?: string
+          mime_type?: string | null
+          project_id: string
+          storage_path: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number
+          id?: string
+          mime_type?: string | null
+          project_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_items: {
         Row: {
           completed_at: string | null
@@ -354,6 +405,7 @@ export type CompanyShare = Tables<"company_shares">
 export type Project = Tables<"projects">
 export type WorkItem = Tables<"work_items">
 export type WorkItemAttachment = Tables<"work_item_attachments">
+export type ProjectDocument = Tables<"project_documents">
 export type DailyLog = Tables<"daily_logs">
 export type ProjectStatus = Enums<"project_status">
 export type ProjectPriority = Enums<"project_priority">
@@ -361,6 +413,10 @@ export type WorkItemType = Enums<"work_item_type">
 export type WorkItemStatus = Enums<"work_item_status">
 
 export type WorkItemAttachmentWithUrl = WorkItemAttachment & {
+  url?: string | null
+}
+
+export type ProjectDocumentWithUrl = ProjectDocument & {
   url?: string | null
 }
 

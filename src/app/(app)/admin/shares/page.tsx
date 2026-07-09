@@ -7,7 +7,7 @@ export default async function AdminSharesPage() {
   const [companies, shares] = await Promise.all([listCompanies(), listCompanyShares()]);
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8">
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/20">
           <Shield className="h-6 w-6 text-indigo-300" />

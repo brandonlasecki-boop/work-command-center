@@ -32,7 +32,7 @@ export function CommandCenterDashboard({ data }: { data: DashboardSummary }) {
             </p>
           </GlassCard>
         ) : (
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-6">
             {data.companies.map((company) => (
               <CompanyOverviewCard
                 key={company.id}

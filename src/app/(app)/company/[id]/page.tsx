@@ -34,37 +34,37 @@ export default async function CompanyPage({
 
   return (
     <div
-      className="animate-fade-in space-y-8"
+      className="animate-fade-in w-full min-w-0 space-y-6 xl:space-y-8"
       style={{ "--company-accent": company.color } as React.CSSProperties}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <Link href="/companies">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             {company.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={company.logo_url} alt={company.name} className="h-14 w-14 rounded-2xl object-cover" />
+              <img src={company.logo_url} alt={company.name} className="h-12 w-12 shrink-0 rounded-2xl object-cover sm:h-14 sm:w-14" />
             ) : (
               <div
-                className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-bold text-white"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white sm:h-14 sm:w-14"
                 style={{ backgroundColor: company.color }}
               >
                 {company.name.charAt(0)}
               </div>
             )}
-            <div>
-              <h1 className="text-3xl font-bold">{company.name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold sm:text-3xl">{company.name}</h1>
               {company.description && (
                 <p className="text-muted-foreground">{company.description}</p>
               )}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
           <ProgressRing progress={progress} size={72} strokeWidth={5} accentColor={company.color} />
           <EditCompanyButton company={company} />
           <DeleteCompanyButton id={company.id} />
@@ -88,7 +88,7 @@ export default async function CompanyPage({
             No projects yet. Create one to start tracking work.
           </GlassCard>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {projectsWithProgress.map((project) => (
               <ProjectCard key={project.id} project={project} companyColor={company.color} />
             ))}

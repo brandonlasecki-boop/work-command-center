@@ -19,7 +19,7 @@ export function PhaseBreakdown({
   if (phases.length === 0) return null;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {phases.map((phase) => {
         const tasks = phase.children.filter((c) => c.type === "task");
         const completedTasks = tasks.filter((t) => t.status === "completed").length;

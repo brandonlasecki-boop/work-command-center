@@ -34,22 +34,22 @@ export default async function ShareCompanyPage({
     >
       <ShareViewBanner share={share} />
 
-      <div className="animate-fade-in mx-auto max-w-6xl space-y-8 p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
+      <div className="animate-fade-in mx-auto w-full min-w-0 max-w-[1920px] space-y-6 p-4 sm:p-6 lg:p-8 xl:p-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             {company.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={company.logo_url} alt={company.name} className="h-14 w-14 rounded-2xl object-cover" />
+              <img src={company.logo_url} alt={company.name} className="h-12 w-12 shrink-0 rounded-2xl object-cover sm:h-14 sm:w-14" />
             ) : (
               <div
-                className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-bold text-white"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white sm:h-14 sm:w-14"
                 style={{ backgroundColor: company.color }}
               >
                 {company.name.charAt(0)}
               </div>
             )}
-            <div>
-              <h1 className="text-3xl font-bold">{company.name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold sm:text-3xl">{company.name}</h1>
               {company.description && (
                 <p className="text-muted-foreground">{company.description}</p>
               )}
@@ -65,7 +65,7 @@ export default async function ShareCompanyPage({
               No projects to show yet.
             </GlassCard>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {projectsWithProgress.map((project) => (
                 <ShareProjectCard
                   key={project.id}

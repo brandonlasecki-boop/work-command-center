@@ -37,7 +37,7 @@ export function DailyLogForm({
     <GlassCard className="p-6">
       <h3 className="mb-4 font-semibold">Log Completed Work</h3>
       <form action={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Company</Label>
             <Select value={companyId} onValueChange={(v) => v && setCompanyId(v)}>

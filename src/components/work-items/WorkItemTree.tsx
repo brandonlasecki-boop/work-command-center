@@ -429,7 +429,7 @@ function WorkItemRow({
     <div>
       <div
         className={cn(
-          "group flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 transition-colors hover:border-white/10 hover:bg-white/5",
+          "group flex min-w-0 items-center gap-2 rounded-xl border border-transparent px-3 py-2 transition-colors hover:border-white/10 hover:bg-white/5",
         )}
         style={{ paddingLeft: `${depth * 24 + 12}px` }}
       >
@@ -478,7 +478,7 @@ function WorkItemRow({
         )}
 
         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className={cn("flex-1 text-sm", node.status === "completed" && "text-muted-foreground line-through")}>
+        <span className={cn("min-w-0 flex-1 truncate text-sm", node.status === "completed" && "text-muted-foreground line-through")}>
           {node.title}
         </span>
         <WorkItemNoteIndicator note={node.description ?? ""} />

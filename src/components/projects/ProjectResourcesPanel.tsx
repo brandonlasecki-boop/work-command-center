@@ -17,12 +17,12 @@ export function ProjectResourcesPanel({
   projectId?: string;
 }) {
   return (
-    <GlassCard className="p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <FolderOpen className="h-5 w-5 text-indigo-300" />
-          <div>
-            <h2 className="text-lg font-semibold">Project Resources</h2>
+    <GlassCard className="p-4 sm:p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <FolderOpen className="mt-0.5 h-5 w-5 shrink-0 text-indigo-300" />
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold">Task Attachments</h2>
             <p className="text-sm text-muted-foreground">
               All files attached to tasks in this project
             </p>
@@ -43,7 +43,7 @@ export function ProjectResourcesPanel({
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3"
+              className="flex flex-wrap items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 sm:flex-nowrap"
             >
               <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-indigo-300" />
               <div className="min-w-0 flex-1">
